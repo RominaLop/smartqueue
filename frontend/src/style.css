@@ -126,3 +126,85 @@ body {
 .forgot-password:hover {
   color: #aabd5a;
 }
+
+/*------------------------------PlacesList styles------------------------------------------- */
+
+.places-container {
+  z-index: 2;
+  width: 900px;
+  background: #f7f7ef;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.places-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2f2f2f;
+  margin-bottom: 20px;
+}
+
+.categories {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.category-btn.active {
+  background: #1f1f1f;
+  color: white;
+  border-color: #1f1f1f;
+}
+
+.category-btn:hover {
+  background: #aabd5a;
+  border-color: #aabd5a;
+  color: white;
+}
+
+.places-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.place-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.place-card:hover {
+  transform: translateY(-4px);
+}
+
+.place-image {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #b8cb73;
+  border-radius: 14px;
+  margin-bottom: 8px;
+}
+
+.place-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f2f2f;
+}
+
+.place-info {
+  font-size: 12px;
+  color: #888;
+}

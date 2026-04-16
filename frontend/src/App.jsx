@@ -1,4 +1,11 @@
+import { useState } from 'react'
+import PlacesList from './PlacesList'
+
 function App() {
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  if (loggedIn) return <PlacesList />
+
   return (
     <div className="app">
       <div className="background-shape shape-top"></div>
@@ -15,7 +22,7 @@ function App() {
           <label>Password</label>
           <input type="password" placeholder="Enter tu contraseña" />
 
-          <button className="login-btn">Sign In</button>
+          <button className="login-btn" onClick={() => setLoggedIn(true)}>Sign In</button>
 
           <a href="#" className="forgot-password">Forgot password?</a>
         </div>
