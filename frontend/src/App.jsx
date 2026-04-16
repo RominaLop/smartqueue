@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import PlacesList from './PlacesList'
+import TurnoEspera from './TurnoEspera'
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false)
+  const [screen, setScreen] = useState('login')
 
-  if (loggedIn) return <PlacesList />
+  if (screen === 'places') {
+    return <PlacesList />
+  }
+
+  if (screen === 'espera') {
+    return <TurnoEspera />
+  }
 
   return (
     <div className="app">
@@ -22,9 +29,20 @@ function App() {
           <label>Password</label>
           <input type="password" placeholder="Enter tu contraseña" />
 
-          <button className="login-btn" onClick={() => setLoggedIn(true)}>Sign In</button>
+          <button className="login-btn" onClick={() => setScreen('places')}>
+            Sign In
+          </button>
 
           <a href="#" className="forgot-password">Forgot password?</a>
+
+          {/* Botón temporal para probar la pantalla de espera */}
+          <button
+            className="login-btn"
+            style={{ marginTop: '10px', backgroundColor: '#444' }}
+            onClick={() => setScreen('espera')}
+          >
+            Ver turno en espera
+          </button>
         </div>
       </div>
     </div>
