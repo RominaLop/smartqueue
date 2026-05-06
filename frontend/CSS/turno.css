@@ -1,0 +1,293 @@
+/* ============================================================
+   SmartQueue – turno.css
+   Estilos exclusivos de turno.html (Tu Turno en Espera)
+   ============================================================ */
+
+.turno-card {
+  width: min(440px, 100%);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.back-btn {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.2s;
+}
+.back-btn:hover { background: #f0f0e8; }
+
+/* ── Cajas de info ───────────────────────────────────────── */
+.service-box,
+.status-box {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.box-label {
+  font-size: 12px;
+  color: var(--text-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.service-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── Grid de datos ───────────────────────────────────────── */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.info-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+.info-card h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+/* ── Barra de progreso ───────────────────────────────────── */
+.progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.progress-bar {
+  width: 100%;
+  height: 14px;
+  background: #e0e0d4;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--btn);
+  border-radius: 20px;
+  transition: width 0.5s ease;
+}
+.progress-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── Estado ──────────────────────────────────────────────── */
+.status-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.status-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 1.4s ease infinite;
+}
+.status-dot.active {
+  background: var(--success);
+  animation: none;
+}
+
+/* ── Banner de notificación ──────────────────────────────── */
+.notify-banner {
+  background: #e8f4de;
+  border: 1.5px solid var(--accent);
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: #4a6a10;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+.notify-banner.show { display: flex; }
+
+/* ── Chip de auto-refresh ────────────────────────────────── */
+.refresh-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+.refresh-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 2s infinite;
+}
+
+/* ── Sección extra (añadir al final de turno.css) ─────────── */
+
+.extra-section {
+  margin-top: 16px;
+}
+
+/* ── Clínica ─────────────────────────────────────────────────*/
+.extra-clinica {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.horario-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.horario-icon { font-size: 1.4rem; }
+
+.extra-label {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #999;
+  margin: 0 0 2px;
+}
+
+.extra-value {
+  font-size: .95rem;
+  font-weight: 600;
+  color: #222;
+  margin: 0;
+}
+
+.emergencia-banner {
+  background: #fff3f3;
+  border: 1.5px solid #ffb3b3;
+  color: #c0392b;
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: .88rem;
+  line-height: 1.5;
+}
+
+/* ── Restaurantes ────────────────────────────────────────────*/
+.extra-restaurantes {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.extra-title {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: #999;
+  margin: 0 0 12px;
+}
+
+.rest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rest-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: opacity .15s;
+}
+
+.rest-item:last-child { border-bottom: none; }
+.rest-item:hover { opacity: .75; }
+
+.rest-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e8ebb0;
+}
+
+.rest-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rest-info { flex: 1; }
+
+.rest-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 2px;
+}
+
+.rest-meta {
+  font-size: .78rem;
+  color: #888;
+  margin: 0 0 3px;
+}
+
+.rest-stars {
+  font-size: .78rem;
+  color: #f5a623;
+  margin: 0;
+}
+
+.rest-stars span {
+  color: #555;
+  font-weight: 600;
+  margin-left: 4px;
+}
