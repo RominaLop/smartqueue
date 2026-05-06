@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartQueue Admin</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #e8ead7;
+      color: #2d2d2d;
+    }
+
+    .phone-container {
+      max-width: 430px;
+      min-height: 100vh;
+      margin: auto;
+      background: #f7f7f0;
+      padding: 22px;
+      position: relative;
+    }
+
+    /* LOGIN */
+
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top left, #b8bc83 0, #b8bc83 28%, transparent 29%),
+        radial-gradient(circle at bottom right, #b8bc83 0, #b8bc83 35%, transparent 36%),
+        #e8ead7;
+      padding: 25px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 28px;
+      border-radius: 22px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .login-card h1 {
+      text-align: center;
+      color: #aabd5a;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    .login-card p {
+      text-align: center;
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #444;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      background: #fff;
+      outline: none;
+      font-size: 14px;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #aabd5a;
+    }
+
+    .main-btn {
+      width: 100%;
+      border: none;
+      background: #aabd5a;
+      color: white;
+      padding: 14px;
+      border-radius: 14px;
+      font-weight: bold;
+      cursor: pointer;      
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .main-btn:hover {
+      background: #594a67;
+    }
+
+    .small-link {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: #aabd5a;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ADMIN */
+
+    .hidden {
+      display: none;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .business-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .business-logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      background: #b8bc83;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .business-info h2 {
+      font-size: 18px;
+      color: #333;
+    }
+
+    .business-info p {
+      font-size: 12px;
+      color: #777;
+    }
+
+    .logout-btn {
+      border: none;
+      background: #eee;
+      color: #555;
+      padding: 8px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .open {
+      background: #d8f3dc;
+      color: #2d6a4f;
+    }
+
+    .closed {
+      background: #ffd6d6;
+      color: #a4161a;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .card h3 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 15px;
+    }
+
+    .switch-row strong {
+      font-size: 14px;
+    }
+
+    .switch-row p {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    .switch {
+      position: relative;
+      width: 55px;
+      height: 29px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      display: none;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #ccc;
+      border-radius: 30px;
+      transition: 0.3s;
+    }
+
+    .slider:before {
+      content: "";
+      position: absolute;
+      width: 23px;
+      height: 23px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    input:checked + .slider {
+      background: #aabd5a;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }       
+
+    .stat-box {
+      background: #e8ead7;
+      border-radius: 16px;
+      padding: 14px 8px;
+      text-align: center;
+    }
+
+    .stat-box h4 {
+      color: #aabd5a;
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .stat-box p {
+      color: #555;
+      font-size: 11px;
+    }
+
+    .next-box {
+      background: #aabd5a;
+      color: white;
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .next-box h3 {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .next-box p {
+      font-size: 13px;
+      opacity: 0.95;
+    }
+
+    .queue-item {
+      background: #f4f4ec;
+      border-radius: 16px;
+      padding: 13px;
+      margin-bottom: 12px;
+    }
+
+    .queue-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .client-info h4 {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .client-info p {
+      font-size: 12px;
+      color: #777;
+      line-height: 1.4;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      border: none;
+      padding: 9px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: bold;
+      flex: 1;
+    }
+
+    .call {
+      background: #d8f3dc;
+      color: #2d6a4f;
+    }
+
+    .done {
+      background: #dbe7ff;
+      color: #1d4ed8;
+    }
+
+    .cancel {
+      background: #ffd6d6;
+      color: #a4161a;
+    }
+
+    .add-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+      padding: 20px;
+    }
+
+    .bottom-nav {
+      position: sticky;
+      bottom: 0;
+      background: #f7f7f0;
+      border-top: 1px solid #ddd;
+      padding: 12px 0 5px;
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+
+    .nav-item {
+      font-size: 11px;
+      text-align: center;
+      color: #777;
+    }
+
+    .nav-item.active {
+      color: #aabd5a;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LOGIN -->
+  <section id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>SmartQueue</h1>
+      <p>Acceso administrador</p>
+
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input type="email" id="emailInput" placeholder="admin@smartqueue.com">
+      </div>
+
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="passwordInput" placeholder="********">
+      </div>
+
+      <div class="form-group">
+        <label>Tipo de negocio</label>
+        <select id="businessType">
+          <option value="restaurante">Restaurante</option>
+          <option value="clinica">Clínica</option>
+          <option value="banco">Banco</option>
+          <option value="universidad">Universidad</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre del negocio</label>
+        <input type="text" id="businessNameInput" placeholder="Ejemplo: FRED'S">
+      </div>
+
+      <button class="main-btn" onclick="login()">Iniciar sesión</button>
+
+      <div class="small-link">
+        ¿Olvidaste tu contraseña?
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN PANEL -->
+  <main id="adminPanel" class="phone-container hidden">
+
+    <div class="top-bar">
+      <div class="business-info">
+        <div id="businessLogo" class="business-logo">F</div>
+        <div>
+          <h2 id="businessName">FRED'S</h2>
+          <p id="businessSubtitle">Panel restaurante</p>
+        </div>
+      </div>
+
+      <button class="logout-btn" onclick="logout()">Salir</button>
+    </div>
+
+    <span id="statusBadge" class="status-badge closed">Cerrado</span>
+
+    <!-- CONFIGURACIÓN -->
+    <section class="card">
+      <h3 id="settingsTitle">Configuración de lista de espera</h3>
+
+      <div class="switch-row">
+        <div>
+          <strong id="switchTitle">Abrir lista de espera</strong>
+          <p id="switchDescription">Permite que los clientes se unan a la fila.</p>
+        </div>
+
+        <label class="switch">
+          <input type="checkbox" id="openSwitch">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label id="endTimeLabel">Hora de cierre de lista</label>
+        <input type="time" id="endTime">
+      </div>
+
+      <div class="form-group">
+        <label id="maxPeopleLabel">Máximo de personas en espera</label>
+        <input type="number" id="maxPeople" placeholder="Ejemplo: 20">
+      </div>
+
+      <button class="main-btn" onclick="saveSettings()">Guardar cambios</button>
+    </section>
+
+    <!-- ESTADÍSTICAS -->
+    <section class="stats">
+      <div class="stat-box">
+        <h4 id="waitingCount">0</h4>
+        <p id="waitingLabel">En espera</p>
+      </div>
+
+      <div class="stat-box">
+        <h4 id="servedCount">0</h4>
+        <p id="servedLabel">Atendidos</p>
+      </div>
+
+      <div class="stat-box">
+        <h4 id="avgTime">15m</h4>
+        <p>Tiempo prom.</p>
+      </div>
+    </section>
+
+    <!-- SIGUIENTE -->
+    <section class="next-box">
+      <h3 id="nextTitle">Siguiente cliente</h3>
+      <p id="nextText">No hay personas en espera</p>
+    </section>
+
+    <!-- AGREGAR PERSONA -->
+    <section class="card">
+      <h3 id="addTitle">Agregar cliente manualmente</h3>
+
+      <div class="add-form">
+        <input type="text" id="personName" placeholder="Nombre">
+        <input type="number" id="personAmount" placeholder="Cantidad de personas / motivo">
+        <button class="main-btn" onclick="addPerson()">Agregar a la lista</button>
+      </div>
+    </section>
+
+    <!-- LISTA -->
+    <section class="card">
+      <h3 id="queueTitle">Lista de espera actual</h3>
+      <div id="queueList"></div>
+    </section>
+
+    <nav class="bottom-nav">
+      <div class="nav-item active">
+        🏠
+        <br>
+        Inicio
+      </div>
+      <div class="nav-item">
+        📋
+        <br>
+        Lista
+      </div>
+      <div class="nav-item">
+        ⚙️
+        <br>
+        Ajustes
+      </div>
+    </nav>
+
+  </main>
+
+  <script>
+    let currentType = "restaurante";
+    let isOpen = false;
+    let served = 0;
+
+    const dataByType = {
+      restaurante: {
+        subtitle: "Panel restaurante",
+        logo: "R",
+        settingsTitle: "Configuración del restaurante",
+        switchTitle: "Abrir lista de espera",
+        switchDescription: "Permite que los clientes se unan a la fila del restaurante.",
+        endTimeLabel: "Hora en la que termina la lista de espera",
+        maxPeopleLabel: "Máximo de clientes en espera",
+        waitingLabel: "En espera",
+        servedLabel: "Atendidos",
+        nextTitle: "Siguiente cliente",
+        addTitle: "Agregar cliente manualmente",
+        queueTitle: "Lista de espera actual",
+        amountPlaceholder: "Número de personas en la mesa",
+        peopleText: "Mesa para",
+        sampleQueue: [
+          { name: "Juan Pérez", amount: 2, time: "10 min" },
+          { name: "María López", amount: 4, time: "15 min" },
+          { name: "Carlos Ruiz", amount: 3, time: "20 min" }
+        ]
+      },
+
+      clinica: {
+        subtitle: "Panel clínica",
+        logo: "C",
+        settingsTitle: "Configuración de la clínica",
+        switchTitle: "Abrir recepción de pacientes",
+        switchDescription: "Permite que los pacientes se registren en la fila de atención.",
+        endTimeLabel: "Hora en la que termina la recepción",
+        maxPeopleLabel: "Máximo de pacientes en espera",
+        waitingLabel: "Pacientes",
+        servedLabel: "Atendidos",
+        nextTitle: "Siguiente paciente",
+        addTitle: "Agregar paciente manualmente",
+        queueTitle: "Pacientes en espera",
+        amountPlaceholder: "Motivo / prioridad numérica",
+        peopleText: "Consulta",
+        sampleQueue: [
+          { name: "Ana Torres", amount: "General", time: "12 min" },
+          { name: "Luis Mendoza", amount: "Control", time: "18 min" },
+          { name: "Sofía Herrera", amount: "Urgente", time: "25 min" }
+        ]
+      },
+
+      banco: {
+        subtitle: "Panel banco",
+        logo: "B",
+        settingsTitle: "Configuración del banco",
+        switchTitle: "Abrir atención al público",
+        switchDescription: "Permite que los usuarios tomen turno para atención bancaria.",
+        endTimeLabel: "Hora de cierre de turnos",
+        maxPeopleLabel: "Máximo de usuarios en espera",
+        waitingLabel: "Usuarios",
+        servedLabel: "Atendidos",
+        nextTitle: "Siguiente usuario",
+        addTitle: "Agregar usuario manualmente",
+        queueTitle: "Usuarios en espera",
+        amountPlaceholder: "Tipo de trámite",
+        peopleText: "Trámite",
+        sampleQueue: [
+          { name: "Pedro Ramírez", amount: "Caja", time: "8 min" },
+          { name: "Valeria Cruz", amount: "Asesoría", time: "16 min" },
+          { name: "Miguel Arias", amount: "Cuenta nueva", time: "22 min" }
+        ]
+      },
+
+      universidad: {
+        subtitle: "Panel universidad",
+        logo: "U",
+        settingsTitle: "Configuración de atención universitaria",
+        switchTitle: "Abrir atención a estudiantes",
+        switchDescription: "Permite que los estudiantes tomen turno para ser atendidos.",
+        endTimeLabel: "Hora de cierre de atención",
+        maxPeopleLabel: "Máximo de estudiantes en espera",
+        waitingLabel: "Estudiantes",
+        servedLabel: "Atendidos",
+        nextTitle: "Siguiente estudiante",
+        addTitle: "Agregar estudiante manualmente",
+        queueTitle: "Estudiantes en espera",
+        amountPlaceholder: "Área o trámite",
+        peopleText: "Trámite",
+        sampleQueue: [
+          { name: "Daniela Castro", amount: "Pagos", time: "10 min" },
+          { name: "Andrés Vega", amount: "Becas", time: "15 min" },
+          { name: "Camila Reyes", amount: "Servicios escolares", time: "20 min" }
+        ]
+      }
+    };
+
+    let queue = [];
+
+    const loginScreen = document.getElementById("loginScreen");
+    const adminPanel = document.getElementById("adminPanel");
+    const businessType = document.getElementById("businessType");
+    const businessNameInput = document.getElementById("businessNameInput");
+    const businessName = document.getElementById("businessName");
+    const businessSubtitle = document.getElementById("businessSubtitle");
+    const businessLogo = document.getElementById("businessLogo");
+
+    const statusBadge = document.getElementById("statusBadge");
+    const openSwitch = document.getElementById("openSwitch");
+    const queueList = document.getElementById("queueList");
+
+    const waitingCount = document.getElementById("waitingCount");
+    const servedCount = document.getElementById("servedCount");
+    const nextText = document.getElementById("nextText");
+
+    openSwitch.addEventListener("change", function () {
+      isOpen = openSwitch.checked;
+      updateStatus();
+    });
+
+    function login() {
+      const email = document.getElementById("emailInput").value;
+      const password = document.getElementById("passwordInput").value;
+      const name = businessNameInput.value.trim();
+
+      if (!email || !password || !name) {
+        alert("Por favor completa todos los campos.");
+        return;
+      }
+
+      currentType = businessType.value;
+      const config = dataByType[currentType];
+
+      businessName.textContent = name.toUpperCase();
+      businessSubtitle.textContent = config.subtitle;
+      businessLogo.textContent = name.charAt(0).toUpperCase();
+
+      queue = [...config.sampleQueue];
+      served = 0;
+      isOpen = false;
+      openSwitch.checked = false;
+
+      applyBusinessTexts();
+      updateStatus();
+      renderQueue();
+
+      loginScreen.classList.add("hidden");
+      adminPanel.classList.remove("hidden");
+    }
+
+    function logout() {
+      adminPanel.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
+    }
+
+    function applyBusinessTexts() {
+      const config = dataByType[currentType];
+
+      document.getElementById("settingsTitle").textContent = config.settingsTitle;
+      document.getElementById("switchTitle").textContent = config.switchTitle;
+      document.getElementById("switchDescription").textContent = config.switchDescription;
+      document.getElementById("endTimeLabel").textContent = config.endTimeLabel;
+      document.getElementById("maxPeopleLabel").textContent = config.maxPeopleLabel;
+      document.getElementById("waitingLabel").textContent = config.waitingLabel;
+      document.getElementById("servedLabel").textContent = config.servedLabel;
+      document.getElementById("nextTitle").textContent = config.nextTitle;
+      document.getElementById("addTitle").textContent = config.addTitle;
+      document.getElementById("queueTitle").textContent = config.queueTitle;
+      document.getElementById("personAmount").placeholder = config.amountPlaceholder;
+    }
+
+    function updateStatus() {
+      if (isOpen) {
+        statusBadge.textContent = "Abierto";
+        statusBadge.className = "status-badge open";
+      } else {
+        statusBadge.textContent = "Cerrado";
+        statusBadge.className = "status-badge closed";
+      }
+    }
+
+    function saveSettings() {
+      const endTime = document.getElementById("endTime").value;
+      const maxPeople = document.getElementById("maxPeople").value;
+
+      if (!endTime) {
+        alert("Selecciona una hora de cierre.");
+        return;
+      }
+
+      if (!maxPeople || maxPeople <= 0) {
+        alert("Ingresa una cantidad máxima válida.");
+        return;
+      }
+
+      alert(
+        "Configuración guardada:\n" +
+        "Estado: " + (isOpen ? "Abierto" : "Cerrado") + "\n" +
+        "Hora de cierre: " + endTime + "\n" +
+        "Máximo en espera: " + maxPeople
+      );
+    }
+
+    function renderQueue() {
+      const config = dataByType[currentType];
+
+      queueList.innerHTML = "";
+
+      waitingCount.textContent = queue.length;
+      servedCount.textContent = served;
+
+      if (queue.length === 0) {
+        nextText.textContent = "No hay personas en espera";
+        queueList.innerHTML = `<p class="empty">No hay personas en espera actualmente.</p>`;
+        return;
+      }
+
+      nextText.textContent = `${config.peopleText}: ${queue[0].amount} - ${queue[0].name}`;
+
+      queue.forEach((person, index) => {
+        const item = document.createElement("div");
+        item.className = "queue-item";
+
+        item.innerHTML = `
+          <div class="queue-top">
+            <div class="client-info">
+              <h4>${index + 1}. ${person.name}</h4>
+              <p>${config.peopleText}: ${person.amount}</p>
+              <p>Tiempo estimado: ${person.time}</p>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="action-btn call" onclick="callPerson(${index})">Llamar</button>
+            <button class="action-btn done" onclick="servePerson(${index})">Atendido</button>
+            <button class="action-btn cancel" onclick="cancelPerson(${index})">Cancelar</button>
+          </div>
+        `;
+
+        queueList.appendChild(item);
+      });
+    }
+
+    function addPerson() {
+      const name = document.getElementById("personName").value.trim();
+      const amount = document.getElementById("personAmount").value.trim();
+
+      if (!name || !amount) {
+        alert("Completa los datos de la persona.");
+        return;
+      }
+
+      queue.push({
+        name: name,
+        amount: amount,
+        time: "Nuevo"
+      });
+
+      document.getElementById("personName").value = "";
+      document.getElementById("personAmount").value = "";
+
+      renderQueue();
+    }
+
+    function callPerson(index) {
+      alert("Llamando a: " + queue[index].name);
+    }
+
+    function servePerson(index) {
+      const name = queue[index].name;
+      queue.splice(index, 1);
+      served++;
+      alert(name + " fue marcado como atendido.");
+      renderQueue();
+    }
+
+    function cancelPerson(index) {
+      const name = queue[index].name;
+      const confirmCancel = confirm("¿Seguro que deseas cancelar el turno de " + name + "?");
+
+      if (confirmCancel) {
+        queue.splice(index, 1);
+        renderQueue();
+      }
+    }
+  </script>
+
+</body>
+</html>
