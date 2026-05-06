@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartQueue – Tu Turno</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../CSS/base.css" />
+    <link rel="stylesheet" href="../CSS/turno.css" />
+</head>
+
+<body>
+
+    <div class="blob blob-top"></div>
+    <div class="blob blob-bottom"></div>
+
+    <div class="card turno-card">
+
+        <div class="top-bar">
+            <button class="back-btn" onclick="window.location.href='places.html'">← Volver</button>
+            <span class="brand">Smart<span>Queue</span></span>
+        </div>
+
+        <div class="service-box">
+            <p class="box-label">Servicio seleccionado</p>
+            <h2 class="service-name" id="service-name">Cargando…</h2>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <p class="box-label">Tu turno</p>
+                <h3 id="mi-turno">–</h3>
+            </div>
+            <div class="info-card">
+                <p class="box-label">Turno actual</p>
+                <h3 id="turno-actual">–</h3>
+            </div>
+            <div class="info-card">
+                <p class="box-label">Personas delante</p>
+                <h3 id="personas-delante">–</h3>
+            </div>
+            <div class="info-card">
+                <p class="box-label">Tiempo estimado</p>
+                <h3 id="tiempo-estimado">–</h3>
+            </div>
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-header">
+                <span class="box-label">Progreso de la fila</span>
+                <span class="progress-pct" id="pct">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <div class="status-box">
+            <div>
+                <p class="box-label">Estado</p>
+                <h3 class="status-text" id="status-text">En espera</h3>
+            </div>
+            <div class="status-dot" id="status-dot"></div>
+        </div>
+
+        <div class="notify-banner" id="notify-banner">
+            🔔 <span>¡Tu turno se acerca! Prepárate.</span>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="actualizarTurno()">🔄 Actualizar</button>
+            <button class="btn btn-danger" onclick="cancelarTurno()">✕ Cancelar</button>
+        </div>
+
+        <div class="refresh-chip">
+            <div class="refresh-dot"></div>
+            <span id="refresh-label">Actualización automática en <span id="countdown">30</span>s</span>
+        </div>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../JS/turno.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,200 @@
+/* ============================================================
+   SmartQueue – base.css
+   Estilos compartidos por todas las pantallas
+   ============================================================ */
+
+:root {
+  --bg: #dce8b2;
+  --bg-dark: #b8cb73;
+  --bg-mid: #c7d88a;
+  --card: #f7f7ef;
+  --text: #2f2f2f;
+  --text-light: #777;
+  --accent: #aabd5a;
+  --btn: #1f1f1f;
+  --btn-hover: #3a3a3a;
+  --border: #d9d9d9;
+  --white: #ffffff;
+  --error: #e05c5c;
+  --success: #4caf7d;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 30px 16px;
+}
+
+/* ── Blobs de fondo ─────────────────────────────────────── */
+.blob {
+  position: absolute;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.blob-top {
+  width: 500px;
+  height: 500px;
+  background: var(--bg-mid);
+  top: -160px;
+  left: -160px;
+  border-radius: 45% 55% 60% 40%;
+  transform: rotate(25deg);
+}
+.blob-bottom {
+  width: 520px;
+  height: 520px;
+  background: var(--bg-dark);
+  bottom: -200px;
+  right: -180px;
+  border-radius: 60% 40% 45% 55%;
+  transform: rotate(-20deg);
+}
+
+/* ── Animaciones ────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Marca ──────────────────────────────────────────────── */
+.brand {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.brand span {
+  color: var(--accent);
+}
+
+/* ── Card ───────────────────────────────────────────────── */
+.card {
+  z-index: 2;
+  background: var(--card);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+  animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Botones ────────────────────────────────────────────── */
+.btn {
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.1s;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--btn);
+  color: white;
+  width: 100%;
+}
+.btn-primary:hover { background: var(--btn-hover); }
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+}
+.btn-secondary:hover { background: #f0f0e8; }
+
+.btn-danger {
+  background: #fdecea;
+  color: #c0392b;
+  border: 1.5px solid #f5c6c2;
+}
+.btn-danger:hover { background: #fbd7d4; }
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+.btn-row .btn { flex: 1; }
+
+/* ── Inputs ─────────────────────────────────────────────── */
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(170, 189, 90, 0.2);
+}
+
+/* ── Error msg ──────────────────────────────────────────── */
+.error-msg {
+  font-size: 12px;
+  color: var(--error);
+  display: none;
+  margin-top: -4px;
+}
+
+/* ── Spinner ────────────────────────────────────────────── */
+.spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto;
+}
+
+/* ── Toast ──────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--btn);
+  color: white;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 999;
+  white-space: nowrap;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+}

@@ -9,10 +9,15 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^8.0.4"
+    "vite": "^8.0.10"
   },
   "dependencies": {
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
-  }
+  },
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

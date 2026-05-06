@@ -1,0 +1,63 @@
+/* ============================================================
+   SmartQueue – login.css
+   Estilos exclusivos de index.html (Login)
+   ============================================================ */
+
+.login-card {
+  width: min(380px, 100%);
+  padding: 44px 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-card .brand {
+  font-size: 30px;
+  text-align: center;
+}
+
+.login-subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.forgot {
+  text-align: center;
+  font-size: 13px;
+  color: #555;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.forgot:hover { color: var(--accent); }
+
+.divider {
+  height: 1px;
+  background: var(--border);
+}
+
+.register-link {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.register-link a {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.register-link a:hover { color: var(--accent); }

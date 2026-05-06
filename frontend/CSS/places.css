@@ -1,0 +1,181 @@
+/* ============================================================
+   SmartQueue – places.css
+   ============================================================ */
+
+.places-card {
+  width: min(900px, 100%);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px 6px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  font-weight: 700;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--text-light);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.logout-btn:hover { color: var(--error); }
+
+/* ── Categorías ──────────────────────────────────────────── */
+.categories {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cat-btn {
+  padding: 8px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--white);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  transition: 0.2s;
+}
+.cat-btn.active {
+  background: var(--btn);
+  color: white;
+  border-color: var(--btn);
+}
+.cat-btn:hover:not(.active) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* ── Buscador ────────────────────────────────────────────── */
+.search-bar {
+  position: relative;
+}
+.search-bar input {
+  padding-left: 40px;
+}
+.search-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+/* ── Grid de lugares ─────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.place-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.place-card:hover { transform: translateY(-5px); }
+
+/* Contenedor de imagen — mantiene proporción cuadrada */
+.place-img {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--bg-mid), var(--bg-dark));
+  border-radius: 16px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* La imagen ocupa todo el contenedor */
+.place-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 16px;
+}
+
+/* Si la imagen falla, se oculta y queda el gradiente de fondo */
+.place-img img.hidden {
+  display: none;
+}
+
+.place-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.place-meta {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+/* ── Estado vacío ────────────────────────────────────────── */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+/* ── Skeletons ───────────────────────────────────────────── */
+.skeleton { animation: pulse 1.4s ease infinite; }
+
+.sk-img {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #e0e0d4;
+  border-radius: 16px;
+  margin-bottom: 10px;
+}
+.sk-line {
+  height: 12px;
+  background: #e0e0d4;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.sk-line.short { width: 60%; }

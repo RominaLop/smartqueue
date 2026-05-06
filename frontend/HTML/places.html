@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartQueue – Lugares</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../CSS/base.css" />
+  <link rel="stylesheet" href="../CSS/places.css" />
+</head>
+<body>
+  <div class="blob blob-top"></div>
+  <div class="blob blob-bottom"></div>
+
+  <div class="card places-card">
+
+    <!-- Top bar -->
+    <div class="top-bar">
+      <h1 class="brand">Smart<span>Queue</span></h1>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="user-chip">
+          <div class="avatar" id="user-initial">U</div>
+          <span id="user-name">Usuario</span>
+        </div>
+        <button class="logout-btn" onclick="logout()">Salir</button>
+      </div>
+    </div>
+
+    <!-- Categorías (generado por JS) -->
+    <div class="categories" id="categories"></div>
+
+    <!-- Buscador -->
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search" placeholder="Buscar lugar..." oninput="renderPlaces()" />
+    </div>
+
+    <!-- Grid de lugares (generado por JS) -->
+    <div class="grid" id="grid"></div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="../JS/places.js"></script>
+</body>
+</html>
