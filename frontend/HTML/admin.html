@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartQueue – Admin</title>
+  <link rel="stylesheet" href="../CSS/admin.css" />
+</head>
+<body>
+  <div class="phone-container">
+
+    <!-- HEADER -->
+    <div class="top-bar">
+      <div class="business-info">
+        <div id="businessLogo" class="business-logo">A</div>
+        <div>
+          <h2 id="businessName">Establecimiento</h2>
+          <p id="businessSubtitle">Panel administrador</p>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">Salir</button>
+    </div>
+
+    <span id="statusBadge" class="status-badge closed">Cerrado</span>
+
+    <!-- CONFIGURACIÓN -->
+    <section class="card">
+      <h3 id="settingsTitle">Configuración de lista de espera</h3>
+      <div class="switch-row">
+        <div>
+          <strong id="switchTitle">Abrir lista de espera</strong>
+          <p id="switchDescription">Permite que los clientes se unan a la fila.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="openSwitch">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label id="endTimeLabel">Hora de cierre de lista</label>
+        <input type="time" id="endTime">
+      </div>
+      <div class="form-group">
+        <label id="maxPeopleLabel">Máximo de personas en espera</label>
+        <input type="number" id="maxPeople" placeholder="Ejemplo: 20">
+      </div>
+      <button class="main-btn" onclick="saveSettings()">Guardar cambios</button>
+    </section>
+
+    <!-- ESTADÍSTICAS -->
+    <section class="stats">
+      <div class="stat-box">
+        <h4 id="waitingCount">0</h4>
+        <p id="waitingLabel">En espera</p>
+      </div>
+      <div class="stat-box">
+        <h4 id="servedCount">0</h4>
+        <p id="servedLabel">Atendidos</p>
+      </div>
+      <div class="stat-box">
+        <h4 id="avgTime">15m</h4>
+        <p>Tiempo prom.</p>
+      </div>
+    </section>
+
+    <!-- SIGUIENTE -->
+    <section class="next-box">
+      <h3 id="nextTitle">Siguiente cliente</h3>
+      <p id="nextText">No hay personas en espera</p>
+    </section>
+
+    <!-- AGREGAR MANUALMENTE -->
+    <section class="card">
+      <h3 id="addTitle">Agregar cliente manualmente</h3>
+      <div class="add-form">
+        <input type="text" id="personName"   placeholder="Nombre">
+        <input type="text" id="personAmount" placeholder="Cantidad / motivo">
+        <button class="main-btn" onclick="addPerson()">Agregar a la lista</button>
+      </div>
+    </section>
+
+    <!-- LISTA -->
+    <section class="card">
+      <h3 id="queueTitle">Lista de espera actual</h3>
+      <div id="queueList"></div>
+    </section>
+
+    <!-- NAV -->
+    <nav class="bottom-nav">
+      <div class="nav-item active">🏠<br>Inicio</div>
+      <div class="nav-item">📋<br>Lista</div>
+      <div class="nav-item">⚙️<br>Ajustes</div>
+    </nav>
+
+  </div>
+  <script src="../JS/admin.js"></script>
+</body>
+</html>
