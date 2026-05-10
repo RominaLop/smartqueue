@@ -1,0 +1,343 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-color: #dce8b2;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  background: #dce8b2;
+}
+
+.background-shape {
+  position: absolute;
+  opacity: 0.7;
+}
+
+.shape-top {
+  width: 500px;
+  height: 500px;
+  background: #c7d88a;
+  top: -160px;
+  left: -160px;
+  border-radius: 45% 55% 60% 40%;
+  transform: rotate(25deg);
+}
+
+.shape-bottom {
+  width: 520px;
+  height: 520px;
+  background: #b8cb73;
+  bottom: -200px;
+  right: -180px;
+  border-radius: 60% 40% 45% 55%;
+  transform: rotate(-20deg);
+}
+
+.phone-frame {
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  width: 380px;
+  background: #f7f7ef;
+  padding: 40px 35px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #2f2f2f;
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 8px;
+}
+
+.login-card label {
+  font-size: 14px;
+  color: #444;
+  font-weight: 500;
+}
+
+.login-card input {
+  padding: 12px 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.login-card input:focus {
+  border-color: #aabd5a;
+}
+
+.login-btn {
+  margin-top: 10px;
+  padding: 13px;
+  background: #1f1f1f;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-btn:hover {
+  background: #3a3a3a;
+}
+
+.forgot-password {
+  text-align: center;
+  font-size: 13px;
+  color: #555;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.forgot-password:hover {
+  color: #aabd5a;
+}
+
+/*------------------------------PlacesList styles------------------------------------------- */
+
+.places-container {
+  z-index: 2;
+  width: 900px;
+  background: #f7f7ef;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.places-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2f2f2f;
+  margin-bottom: 20px;
+}
+
+.categories {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.category-btn.active {
+  background: #1f1f1f;
+  color: white;
+  border-color: #1f1f1f;
+}
+
+.category-btn:hover {
+  background: #aabd5a;
+  border-color: #aabd5a;
+  color: white;
+}
+
+.places-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.place-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.place-card:hover {
+  transform: translateY(-4px);
+}
+
+.place-image {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #b8cb73;
+  border-radius: 14px;
+  margin-bottom: 8px;
+}
+
+.place-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f2f2f;
+}
+
+.place-info {
+  font-size: 12px;
+  color: #888;
+}
+
+/*------------------------------TurnoEspera styles------------------------------------------- */
+
+.page-bg {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  background: #dce8b2;
+}
+
+.circle {
+  position: absolute;
+  opacity: 0.7;
+}
+
+.top-left {
+  width: 500px;
+  height: 500px;
+  background: #c7d88a;
+  top: -160px;
+  left: -160px;
+  border-radius: 45% 55% 60% 40%;
+  transform: rotate(25deg);
+}
+
+.bottom-right {
+  width: 520px;
+  height: 520px;
+  background: #b8cb73;
+  bottom: -200px;
+  right: -180px;
+  border-radius: 60% 40% 45% 55%;
+  transform: rotate(-20deg);
+}
+
+.card {
+  width: 420px;
+  background: #f7f7ef;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+}
+
+.turn-box,
+.status-box {
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.service-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2f2f2f;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.info-card {
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+
+.info-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2f2f2f;
+}
+
+.progress-section {
+  margin-bottom: 18px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background: #ddd;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #1f1f1f;
+  border-radius: 20px;
+  transition: width 0.3s ease;
+}
+
+.status-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2f2f2f;
+}
+
+.main-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  background: #1f1f1f;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.main-btn:hover {
+  background: #3a3a3a;
+}
+/* ----------------------------Bancos--------------------------------*/

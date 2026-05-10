@@ -5,7 +5,7 @@
 
 
 // ── Ruta imágenes ─────────────────────────────────────────────
-const IMG_PATH = '/frontend/src/assets/';
+const IMG_PATH = '/src/assets/';
 const IMAGES = {
     "BBVA México": "bbva.jpg",
     "Banorte": "banorte.jpg",
@@ -42,7 +42,9 @@ function loadSession() {
 }
 
 function logout() {
-    sessionStorage.removeItem('usuario');
+    sessionStorage.clear();
+    localStorage.removeItem('smartqueue_place');
+    localStorage.removeItem('smartqueue_categoria');
     window.location.href = '../HTML/index.html';
 }
 
@@ -135,8 +137,8 @@ async function renderPlaces() {
 
 // ── Navegación ────────────────────────────────────────────────
 function goToQueue(placeName) {
-    localStorage.setItem('smartqueue_place', placeName);
-    localStorage.setItem('smartqueue_categoria', activeCategory); // ← agregar esta línea
+    sessionStorage.setItem('smartqueue_place', placeName);
+    sessionStorage.setItem('smartqueue_categoria', activeCategory);
     window.location.href = '../HTML/turno.html';
 }
 

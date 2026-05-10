@@ -24,7 +24,7 @@ let isAdminMode = false;
 document.getElementById('toggleAdmin').addEventListener('click', () => {
     isAdminMode = !isAdminMode;
     const fields = document.getElementById('adminFields');
-    const label  = document.querySelector('#toggleAdmin span');
+    const label = document.querySelector('#toggleAdmin span');
     if (isAdminMode) {
         fields.classList.add('visible');
         label.textContent = 'Iniciar como cliente';
@@ -39,9 +39,9 @@ document.getElementById('toggleAdmin').addEventListener('click', () => {
 document.getElementById('businessType').addEventListener('change', actualizarPlaceholder);
 
 function actualizarPlaceholder() {
-    const tipo     = document.getElementById('businessType').value;
+    const tipo = document.getElementById('businessType').value;
     const ejemplos = EJEMPLOS[tipo] || [];
-    const ejemplo  = ejemplos[Math.floor(Math.random() * ejemplos.length)] || '';
+    const ejemplo = ejemplos[Math.floor(Math.random() * ejemplos.length)] || '';
     document.getElementById('businessName').placeholder = `Ej: ${ejemplo}`;
 }
 
@@ -51,19 +51,19 @@ document.getElementById('loginForm').addEventListener('submit', handleLogin);
 async function handleLogin(e) {
     e.preventDefault();
 
-    const email    = document.getElementById('email').value.trim();
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
     const emailErr = document.getElementById('email-error');
-    const passErr  = document.getElementById('pass-error');
-    const apiErr   = document.getElementById('api-error');
+    const passErr = document.getElementById('pass-error');
+    const apiErr = document.getElementById('api-error');
 
     emailErr.style.display = 'none';
-    passErr.style.display  = 'none';
-    apiErr.style.display   = 'none';
+    passErr.style.display = 'none';
+    apiErr.style.display = 'none';
 
     let valid = true;
     if (!email || !email.includes('@')) { emailErr.style.display = 'block'; valid = false; }
-    if (!password)                       { passErr.style.display  = 'block'; valid = false; }
+    if (!password) { passErr.style.display = 'block'; valid = false; }
     if (!valid) return;
 
     setLoading(true);
@@ -93,10 +93,11 @@ async function handleLogin(e) {
 
             // Si está en modo admin, guardar tipo y nombre de negocio
             if (isAdminMode) {
-                usuario.TipoNegocio   = document.getElementById('businessType').value;
+                usuario.TipoNegocio = document.getElementById('businessType').value;
                 usuario.NombreNegocio = document.getElementById('businessName').value.trim();
             }
 
+            sessionStorage.clear();
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
 
             if (usuario.NombreRol === 'Cliente') {
@@ -106,7 +107,7 @@ async function handleLogin(e) {
             }
         }
     } catch (err) {
-        apiErr.textContent   = err.message;
+        apiErr.textContent = err.message;
         apiErr.style.display = 'block';
     } finally {
         setLoading(false);
@@ -114,8 +115,8 @@ async function handleLogin(e) {
 }
 
 function setLoading(on) {
-    document.getElementById('btn-text').style.display        = on ? 'none'  : 'block';
-    document.getElementById('spinner').style.display         = on ? 'block' : 'none';
-    document.getElementById('login-btn').style.opacity       = on ? '0.7'   : '1';
-    document.getElementById('login-btn').style.pointerEvents = on ? 'none'  : 'auto';
+    document.getElementById('btn-text').style.display = on ? 'none' : 'block';
+    document.getElementById('spinner').style.display = on ? 'block' : 'none';
+    document.getElementById('login-btn').style.opacity = on ? '0.7' : '1';
+    document.getElementById('login-btn').style.pointerEvents = on ? 'none' : 'auto';
 }

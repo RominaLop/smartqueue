@@ -2,7 +2,7 @@
 // turno.js  –  SmartQueue
 // ============================================================
 
-const IMG_PATH = '/frontend/src/assets/';
+const IMG_PATH = '/src/assets/';
 
 const IMAGES = {
     "BBVA México":       "bbva.jpg",
@@ -13,23 +13,21 @@ const IMAGES = {
     "Scotiabank":        "scotiabank.jpg",
     "Banco Azteca":      "banco-azteca.jpg",
     "Banco Inbursa":     "banco-inbursa.jpg",
-    "Pampas":            "pampas.jpg",
-    "Harrys":            "harrys.jpg",
-    "Freds":             "freds.jpg",
+    "Pampas":            "Pampas.jpg",
+    "Harrys":            "Harrys.jpg",
+    "Freds":             "Freds.jpg",
     "Puerto Madero":     "puerto-madero.jpg",
-    "RosaNegra":         "rosanegra.jpg",
-    "Navios":            "navios.jpg",
-    "Ilios":             "ilios.jpg",
-    "Taboo":             "taboo.jpg",
-    "Clínica SmartCare": "clinica.jpg"
+    "RosaNegra":         "RosaNegra.jpg",
+    "Navios":            "Navios.jpg",
+    "Ilios":             "Ilios.jpg",
+    "Taboo":             "Taboo.jpg",
+    "Clínica SmartCare": "SmartCare.jpg"
 };
 
-// Horarios ficticios para clínicas
 const HORARIOS_CLINICA = {
     "Clínica SmartCare": { apertura: 7, cierre: 21, emergencias: true }
 };
 
-// Info extra para restaurantes
 const INFO_RESTAURANTES = {
     "Pampas":        { rating: 4.8, precio: "$$$", tipo: "Asador argentino" },
     "Harrys":        { rating: 4.6, precio: "$$",  tipo: "Bar & Grill" },
@@ -42,52 +40,172 @@ const INFO_RESTAURANTES = {
 };
 
 // ── Estado global ─────────────────────────────────────────────
-let placeName   = '';
-let categoria   = '';
-let countdownVal = 30;
-let countdownTimer = null;
-let autoRefreshTimer = null;
+let placeName         = '';
+let categoria         = '';
+let idEstablecimiento = null;
+let idTurnoActual     = null;
+let countdownVal      = 5;
+let countdownTimer    = null;
+let autoRefreshTimer  = null;
+let yaNotificado      = false; // evitar repetir notificación
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    placeName = localStorage.getItem('smartqueue_place') || '';
-    categoria = localStorage.getItem('smartqueue_categoria') || '';
+    placeName         = sessionStorage.getItem('smartqueue_place') || '';
+    categoria         = sessionStorage.getItem('smartqueue_categoria') || '';
+    idEstablecimiento = sessionStorage.getItem('idEstablecimiento') || null;
+    idTurnoActual     = sessionStorage.getItem('idTurno') || null;
 
-    // Mostrar nombre del lugar
+    // Pedir permiso de notificaciones
+    if (Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
     const serviceEl = document.getElementById('service-name');
     if (serviceEl) serviceEl.textContent = placeName || 'Sin servicio';
 
-    await actualizarTurno();
+    // Si no tenemos idEstablecimiento, buscarlo por nombre
+    if (!idEstablecimiento && placeName) {
+        try {
+            const res  = await fetch(`http://localhost:3001/establecimiento/buscar?nombre=${encodeURIComponent(placeName)}`);
+            const data = await res.json();
+            if (data && data.IDEstablecimiento) {
+                idEstablecimiento = data.IDEstablecimiento;
+                sessionStorage.setItem('idEstablecimiento', idEstablecimiento);
+            }
+        } catch (e) {
+            console.warn('No se pudo obtener establecimiento:', e);
+        }
+    }
+
+    // Si el cliente no tiene turno aún, tomarlo automáticamente
+    if (!idTurnoActual && idEstablecimiento) {
+        await tomarTurno();
+    } else {
+        await actualizarTurno();
+    }
+
     iniciarAutoRefresh();
     renderExtra();
 });
 
-// ── Turno ─────────────────────────────────────────────────────
-async function actualizarTurno() {
+// ── Tomar turno ───────────────────────────────────────────────
+async function tomarTurno() {
+    const usuario   = JSON.parse(sessionStorage.getItem('usuario') || '{}');
+    const idUsuario = usuario.IDUsuario;
+
+    if (!idUsuario || !idEstablecimiento) {
+        console.warn('Faltan datos para tomar turno');
+        return;
+    }
+
     try {
-        const res = await fetch(`http://localhost:3001/turno/${encodeURIComponent(placeName)}`);
+        const resServ  = await fetch(`http://localhost:3001/servicios/${idEstablecimiento}`);
+        const servicios = await resServ.json();
+        if (!servicios || servicios.length === 0) {
+            console.warn('No hay servicios disponibles');
+            return;
+        }
+        const idServicio = servicios[0].IDServicio;
+
+        const res  = await fetch('http://localhost:3001/turno/nuevo', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ idUsuario, idServicio, idEstablecimiento })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            idTurnoActual = data.idTurno;
+            sessionStorage.setItem('idTurno', idTurnoActual);
+
+            setVal('mi-turno',         data.codigoTurno);
+            setVal('personas-delante', data.personasDelante);
+            setVal('tiempo-estimado',  `${data.tiempoEstimadoMin} min`);
+            setVal('turno-actual',     '–');
+            setVal('status-text',      'En espera');
+
+            const pct = data.personasDelante === 0 ? 100 : 0;
+            document.getElementById('pct').textContent           = `${pct}%`;
+            document.getElementById('progress-fill').style.width = `${pct}%`;
+
+            const dot = document.getElementById('status-dot');
+            if (dot) dot.className = 'status-dot';
+        }
+    } catch (e) {
+        console.warn('Error al tomar turno:', e);
+    }
+}
+
+// ── Actualizar turno desde BD ─────────────────────────────────
+async function actualizarTurno() {
+    if (!idTurnoActual || !idEstablecimiento) return;
+
+    try {
+        const res  = await fetch(`http://localhost:3001/turno/${idTurnoActual}/estado`);
         if (!res.ok) throw new Error('Sin respuesta');
         const data = await res.json();
 
-        setVal('mi-turno',        data.miTurno       ?? '–');
-        setVal('turno-actual',    data.turnoActual   ?? '–');
-        setVal('personas-delante',data.personasDelante ?? '–');
-        setVal('tiempo-estimado', data.tiempoEstimado ? `${data.tiempoEstimado} min` : '–');
+        setVal('mi-turno',         data.CodigoTurno    ?? '–');
+        setVal('turno-actual',     data.turnoActual     ?? '–');
+        setVal('personas-delante', data.PersonasDelante ?? '–');
+        setVal('tiempo-estimado',  data.TiempoEstimadoMin ? `${data.TiempoEstimadoMin} min` : '–');
 
         const pct = data.progreso ?? 0;
-        document.getElementById('pct').textContent          = `${pct}%`;
+        document.getElementById('pct').textContent           = `${pct}%`;
         document.getElementById('progress-fill').style.width = `${pct}%`;
 
-        const estado = data.estado || 'En espera';
-        document.getElementById('status-text').textContent = estado;
-        const dot = document.getElementById('status-dot');
-        dot.className = 'status-dot ' + (estado === 'En turno' ? 'green' : estado === 'Cancelado' ? 'red' : '');
+        const estado = data.NombreEstado || 'En espera';
+        setVal('status-text', estado);
 
-        const banner = document.getElementById('notify-banner');
-        if (data.personasDelante <= 2 && data.personasDelante !== null) {
-            banner.style.display = 'flex';
-        } else {
-            banner.style.display = 'none';
+        const dot = document.getElementById('status-dot');
+        if (dot) {
+            dot.className = 'status-dot ' +
+                (estado === 'En atención' ? 'green' : estado === 'Cancelado' ? 'red' : '');
+        }
+
+        // 🔔 Notificación cuando el admin llama al cliente
+        if (estado === 'En atención' && !yaNotificado) {
+            yaNotificado = true;
+
+            // Notificación del navegador
+            if (Notification.permission === 'granted') {
+                new Notification('¡Te están llamando! 🔔', {
+                    body: `${placeName} te está llamando. Por favor acércate al mostrador.`,
+                    icon: '/src/assets/SmartQueue.jpg'
+                });
+            }
+
+            // Banner visual
+            const banner = document.getElementById('notify-banner');
+            if (banner) {
+                banner.style.display = 'flex';
+                const bannerText = banner.querySelector('p');
+                if (bannerText) bannerText.textContent = '¡Te están llamando! Acércate al mostrador 🏃';
+            }
+
+            // Toast también
+            showToast('🔔 ¡Es tu turno! Acércate al mostrador');
+        }
+
+        // Banner de "casi tu turno" cuando hay pocas personas delante
+        if (estado !== 'En atención') {
+            const banner = document.getElementById('notify-banner');
+            if (banner) {
+                if (data.PersonasDelante <= 2 && data.PersonasDelante > 0) {
+                    banner.style.display = 'flex';
+                    const bannerText = banner.querySelector('p');
+                    if (bannerText) bannerText.textContent = `¡Casi es tu turno! Solo ${data.PersonasDelante} persona(s) delante.`;
+                } else if (data.PersonasDelante > 2) {
+                    banner.style.display = 'none';
+                }
+            }
+        }
+
+        // Si finalizado o cancelado, limpiar sesión de turno
+        if (estado === 'Finalizado' || estado === 'Cancelado') {
+            sessionStorage.removeItem('idTurno');
+            idTurnoActual = null;
         }
 
         resetCountdown();
@@ -96,10 +214,20 @@ async function actualizarTurno() {
     }
 }
 
+// ── Cancelar turno ────────────────────────────────────────────
 async function cancelarTurno() {
     if (!confirm('¿Seguro que deseas cancelar tu turno?')) return;
+    if (!idTurnoActual) { showToast('No tienes un turno activo'); return; }
+
     try {
-        await fetch(`http://localhost:3001/turno/${encodeURIComponent(placeName)}/cancelar`, { method: 'POST' });
+        const res = await fetch(`http://localhost:3001/turno/${idTurnoActual}/cancelar`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ idEstablecimiento })
+        });
+        if (!res.ok) throw new Error('Error al cancelar');
+        sessionStorage.removeItem('idTurno');
+        idTurnoActual = null;
         showToast('Turno cancelado');
         setTimeout(() => window.location.href = 'places.html', 1500);
     } catch (e) {
@@ -107,60 +235,53 @@ async function cancelarTurno() {
     }
 }
 
-// ── Auto-refresh ──────────────────────────────────────────────
+// ── Auto-refresh cada 5 segundos ──────────────────────────────
 function iniciarAutoRefresh() {
     clearInterval(autoRefreshTimer);
     clearInterval(countdownTimer);
 
-    countdownVal = 30;
+    countdownVal     = 5;
     autoRefreshTimer = setInterval(async () => {
         await actualizarTurno();
         resetCountdown();
-    }, 30000);
+    }, 5000);
 
     countdownTimer = setInterval(() => {
         countdownVal--;
         const el = document.getElementById('countdown');
         if (el) el.textContent = countdownVal;
-        if (countdownVal <= 0) countdownVal = 30;
+        if (countdownVal <= 0) countdownVal = 5;
     }, 1000);
 }
 
 function resetCountdown() {
-    countdownVal = 30;
+    countdownVal = 5;
     const el = document.getElementById('countdown');
-    if (el) el.textContent = 30;
+    if (el) el.textContent = 5;
 }
 
 // ── Sección extra por categoría ───────────────────────────────
 function renderExtra() {
-    // Detectar categoría desde el nombre si no viene en localStorage
     const esRestaurante = Object.keys(INFO_RESTAURANTES).includes(placeName);
     const esClinica     = Object.keys(HORARIOS_CLINICA).includes(placeName);
+    if (!esRestaurante && !esClinica) return;
 
-    if (!esRestaurante && !esClinica) return; // bancos u otros: nada extra
-
-    const card = document.querySelector('.turno-card');
+    const card   = document.querySelector('.turno-card');
     const btnRow = card.querySelector('.btn-row');
-
     const section = document.createElement('div');
     section.className = 'extra-section';
 
-    if (esClinica) {
-        section.innerHTML = renderClinicaExtra(placeName);
-    } else {
-        section.innerHTML = renderRestauranteExtra(placeName);
-    }
+    section.innerHTML = esClinica
+        ? renderClinicaExtra(placeName)
+        : renderRestauranteExtra(placeName);
 
     card.insertBefore(section, btnRow);
 }
 
-// ── Clínica: horario + emergencias ────────────────────────────
 function renderClinicaExtra(nombre) {
-    const info  = HORARIOS_CLINICA[nombre] || { apertura: 8, cierre: 20, emergencias: false };
-    const ahora = new Date().getHours();
+    const info    = HORARIOS_CLINICA[nombre] || { apertura: 8, cierre: 20, emergencias: false };
+    const ahora   = new Date().getHours();
     const abierto = ahora >= info.apertura && ahora < info.cierre;
-
     return `
     <div class="extra-clinica">
       <div class="horario-row">
@@ -177,15 +298,12 @@ function renderClinicaExtra(nombre) {
     </div>`;
 }
 
-// ── Restaurante: otros lugares recomendados ───────────────────
 function renderRestauranteExtra(actual) {
     const otros = Object.keys(INFO_RESTAURANTES).filter(n => n !== actual);
-
     const items = otros.map(nombre => {
-        const info = INFO_RESTAURANTES[nombre];
-        const img  = IMAGES[nombre] || 'default.jpg';
+        const info      = INFO_RESTAURANTES[nombre];
+        const img       = IMAGES[nombre] || 'default.jpg';
         const estrellas = '★'.repeat(Math.round(info.rating)) + '☆'.repeat(5 - Math.round(info.rating));
-
         return `
         <div class="rest-item" onclick="irARestaurante('${nombre}')">
           <div class="rest-thumb">
@@ -199,7 +317,6 @@ function renderRestauranteExtra(actual) {
           </div>
         </div>`;
     }).join('');
-
     return `
     <div class="extra-restaurantes">
       <p class="extra-title">Otros restaurantes cerca</p>
@@ -208,8 +325,10 @@ function renderRestauranteExtra(actual) {
 }
 
 function irARestaurante(nombre) {
-    localStorage.setItem('smartqueue_place', nombre);
-    localStorage.setItem('smartqueue_categoria', 'Restaurantes');
+    sessionStorage.removeItem('idTurno');
+    sessionStorage.removeItem('idEstablecimiento');
+    sessionStorage.setItem('smartqueue_place', nombre);
+    sessionStorage.setItem('smartqueue_categoria', 'Restaurantes');
     window.location.reload();
 }
 
