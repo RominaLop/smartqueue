@@ -2,7 +2,6 @@
 // admin.js  –  SmartQueue Administrador
 // ============================================================
 
-// ── Textos por tipo de negocio ────────────────────────────────
 const dataByType = {
     restaurante: {
         subtitle: "Panel restaurante", logo: "R",
@@ -14,12 +13,7 @@ const dataByType = {
         waitingLabel: "En espera", servedLabel: "Atendidos",
         nextTitle: "Siguiente cliente", addTitle: "Agregar cliente manualmente",
         queueTitle: "Lista de espera actual",
-        amountPlaceholder: "Número de personas en la mesa", peopleText: "Mesa para",
-        sampleQueue: [
-            { name: "Juan Pérez",   amount: 2,         time: "10 min" },
-            { name: "María López",  amount: 4,         time: "15 min" },
-            { name: "Carlos Ruiz",  amount: 3,         time: "20 min" }
-        ]
+        amountPlaceholder: "Número de personas en la mesa", peopleText: "Mesa para"
     },
     clinica: {
         subtitle: "Panel clínica", logo: "C",
@@ -31,12 +25,7 @@ const dataByType = {
         waitingLabel: "Pacientes", servedLabel: "Atendidos",
         nextTitle: "Siguiente paciente", addTitle: "Agregar paciente manualmente",
         queueTitle: "Pacientes en espera",
-        amountPlaceholder: "Motivo / prioridad", peopleText: "Consulta",
-        sampleQueue: [
-            { name: "Ana Torres",     amount: "General", time: "12 min" },
-            { name: "Luis Mendoza",   amount: "Control", time: "18 min" },
-            { name: "Sofía Herrera",  amount: "Urgente", time: "25 min" }
-        ]
+        amountPlaceholder: "Motivo / prioridad", peopleText: "Consulta"
     },
     banco: {
         subtitle: "Panel banco", logo: "B",
@@ -48,12 +37,7 @@ const dataByType = {
         waitingLabel: "Usuarios", servedLabel: "Atendidos",
         nextTitle: "Siguiente usuario", addTitle: "Agregar usuario manualmente",
         queueTitle: "Usuarios en espera",
-        amountPlaceholder: "Tipo de trámite", peopleText: "Trámite",
-        sampleQueue: [
-            { name: "Pedro Ramírez", amount: "Caja",        time: "8 min" },
-            { name: "Valeria Cruz",  amount: "Asesoría",    time: "16 min" },
-            { name: "Miguel Arias",  amount: "Cuenta nueva",time: "22 min" }
-        ]
+        amountPlaceholder: "Tipo de trámite", peopleText: "Trámite"
     },
     universidad: {
         subtitle: "Panel universidad", logo: "U",
@@ -65,58 +49,89 @@ const dataByType = {
         waitingLabel: "Estudiantes", servedLabel: "Atendidos",
         nextTitle: "Siguiente estudiante", addTitle: "Agregar estudiante manualmente",
         queueTitle: "Estudiantes en espera",
-        amountPlaceholder: "Área o trámite", peopleText: "Trámite",
-        sampleQueue: [
-            { name: "Daniela Castro", amount: "Pagos",               time: "10 min" },
-            { name: "Andrés Vega",    amount: "Becas",               time: "15 min" },
-            { name: "Camila Reyes",   amount: "Servicios escolares", time: "20 min" }
-        ]
+        amountPlaceholder: "Área o trámite", peopleText: "Trámite"
     }
 };
 
 // ── Estado ────────────────────────────────────────────────────
-let currentType = 'restaurante';
-let isOpen      = false;
-let served      = 0;
-let queue       = [];
+let currentType        = 'restaurante';
+let isOpen             = false;
+let served             = 0;
+let queue              = [];
+let idEstablecimiento  = null;
+let idAdmin            = null;
+let autoRefreshTimer   = null;
 
 // ── Sesión ────────────────────────────────────────────────────
-function loadSession() {
+async function loadSession() {
     const usuario = JSON.parse(sessionStorage.getItem('usuario') || '{}');
 
-    // Sin sesión o es cliente → redirigir
-    if (!usuario || !usuario.NombreRol) {
-        window.location.href = 'index.html';
-        return;
-    }
-    if (usuario.NombreRol === 'Cliente') {
-        window.location.href = 'places.html';
-        return;
-    }
+    if (!usuario || !usuario.NombreRol) { window.location.href = 'index.html'; return; }
+    if (usuario.NombreRol === 'Cliente') { window.location.href = 'places.html'; return; }
 
-    // Tipo y nombre de negocio desde sessionStorage
+    idAdmin     = usuario.IDUsuario;
     currentType = (usuario.TipoNegocio || 'restaurante').toLowerCase();
     const nombre = usuario.NombreNegocio || usuario.Nombre || 'Establecimiento';
 
     const config = dataByType[currentType] || dataByType['restaurante'];
 
-    document.getElementById('businessLogo').textContent    = nombre.charAt(0).toUpperCase();
-    document.getElementById('businessName').textContent    = nombre.toUpperCase();
+    document.getElementById('businessLogo').textContent     = nombre.charAt(0).toUpperCase();
+    document.getElementById('businessName').textContent     = nombre.toUpperCase();
     document.getElementById('businessSubtitle').textContent = config.subtitle;
-
-    queue  = [...config.sampleQueue];
-    served = 0;
-    isOpen = false;
-    document.getElementById('openSwitch').checked = false;
 
     applyTexts(config);
     updateStatus();
-    renderQueue();
+
+    // 🔥 Buscar IDEstablecimiento desde el backend por nombre
+    try {
+        const res  = await fetch(`http://localhost:3001/establecimiento/buscar?nombre=${encodeURIComponent(nombre)}`);
+        const data = await res.json();
+        if (data && data.IDEstablecimiento) {
+            idEstablecimiento = data.IDEstablecimiento;
+            sessionStorage.setItem('idEstablecimiento', idEstablecimiento);
+            await cargarCola();
+            iniciarAutoRefresh();
+        } else {
+            console.warn('Establecimiento no encontrado en BD');
+        }
+    } catch (err) {
+        console.error('Error buscando establecimiento:', err);
+    }
+
+    served = 0;
+    isOpen = false;
+    document.getElementById('openSwitch').checked = false;
 }
 
 function logout() {
-    sessionStorage.removeItem('usuario');
+    clearInterval(autoRefreshTimer);
+    sessionStorage.clear();
     window.location.href = 'index.html';
+}
+
+// ── Auto-refresh ──────────────────────────────────────────────
+function iniciarAutoRefresh() {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(cargarCola, 15000); // cada 15 segundos
+}
+
+// ── 🔥 Cargar cola desde backend ──────────────────────────────
+async function cargarCola() {
+    if (!idEstablecimiento) return;
+    try {
+        const res  = await fetch(`http://localhost:3001/cola/${idEstablecimiento}`);
+        const data = await res.json();
+        queue = data.map(t => ({
+            idTurno: t.IDTurno,
+            name:    t.Nombre,
+            amount:  t.CodigoTurno,
+            time:    `${t.TiempoEstimadoMin} min`,
+            estado:  t.NombreEstado
+        }));
+        renderQueue();
+    } catch (err) {
+        console.error('Error cargando cola:', err);
+    }
 }
 
 // ── Switch ────────────────────────────────────────────────────
@@ -138,24 +153,24 @@ function updateStatus() {
 
 // ── Textos dinámicos ──────────────────────────────────────────
 function applyTexts(config) {
-    document.getElementById('settingsTitle').textContent    = config.settingsTitle;
-    document.getElementById('switchTitle').textContent      = config.switchTitle;
+    document.getElementById('settingsTitle').textContent     = config.settingsTitle;
+    document.getElementById('switchTitle').textContent       = config.switchTitle;
     document.getElementById('switchDescription').textContent = config.switchDescription;
-    document.getElementById('endTimeLabel').textContent     = config.endTimeLabel;
-    document.getElementById('maxPeopleLabel').textContent   = config.maxPeopleLabel;
-    document.getElementById('waitingLabel').textContent     = config.waitingLabel;
-    document.getElementById('servedLabel').textContent      = config.servedLabel;
-    document.getElementById('nextTitle').textContent        = config.nextTitle;
-    document.getElementById('addTitle').textContent         = config.addTitle;
-    document.getElementById('queueTitle').textContent       = config.queueTitle;
-    document.getElementById('personAmount').placeholder     = config.amountPlaceholder;
+    document.getElementById('endTimeLabel').textContent      = config.endTimeLabel;
+    document.getElementById('maxPeopleLabel').textContent    = config.maxPeopleLabel;
+    document.getElementById('waitingLabel').textContent      = config.waitingLabel;
+    document.getElementById('servedLabel').textContent       = config.servedLabel;
+    document.getElementById('nextTitle').textContent         = config.nextTitle;
+    document.getElementById('addTitle').textContent          = config.addTitle;
+    document.getElementById('queueTitle').textContent        = config.queueTitle;
+    document.getElementById('personAmount').placeholder      = config.amountPlaceholder;
 }
 
 // ── Cola ──────────────────────────────────────────────────────
 function renderQueue() {
-    const config      = dataByType[currentType] || dataByType['restaurante'];
-    const queueList   = document.getElementById('queueList');
-    const nextText    = document.getElementById('nextText');
+    const config    = dataByType[currentType] || dataByType['restaurante'];
+    const queueList = document.getElementById('queueList');
+    const nextText  = document.getElementById('nextText');
 
     document.getElementById('waitingCount').textContent = queue.length;
     document.getElementById('servedCount').textContent  = served;
@@ -168,7 +183,7 @@ function renderQueue() {
         return;
     }
 
-    nextText.textContent = `${config.peopleText}: ${queue[0].amount} - ${queue[0].name}`;
+    nextText.textContent = `${config.peopleText}: ${queue[0].amount} — ${queue[0].name}`;
 
     queue.forEach((person, index) => {
         const item = document.createElement('div');
@@ -177,8 +192,9 @@ function renderQueue() {
             <div class="queue-top">
                 <div class="client-info">
                     <h4>${index + 1}. ${person.name}</h4>
-                    <p>${config.peopleText}: ${person.amount}</p>
+                    <p>Turno: ${person.amount}</p>
                     <p>Tiempo estimado: ${person.time}</p>
+                    <p>Estado: ${person.estado}</p>
                 </div>
             </div>
             <div class="actions">
@@ -194,34 +210,97 @@ function addPerson() {
     const name   = document.getElementById('personName').value.trim();
     const amount = document.getElementById('personAmount').value.trim();
     if (!name || !amount) { alert('Completa los datos.'); return; }
-    queue.push({ name, amount, time: 'Nuevo' });
+    // Solo agrega localmente por ahora (sin cuenta de cliente)
+    queue.push({ idTurno: null, name, amount, time: 'Nuevo', estado: 'En espera' });
     document.getElementById('personName').value   = '';
     document.getElementById('personAmount').value = '';
     renderQueue();
 }
 
-function callPerson(index)  { alert('Llamando a: ' + queue[index].name); }
-
-function servePerson(index) {
-    const name = queue[index].name;
-    queue.splice(index, 1);
-    served++;
-    alert(name + ' fue marcado como atendido.');
-    renderQueue();
+function callPerson(index) {
+    alert('Llamando a: ' + queue[index].name);
 }
 
-function cancelPerson(index) {
-    if (confirm(`¿Seguro que deseas cancelar el turno de ${queue[index].name}?`)) {
+// 🔥 Marcar como atendido → llama al backend
+async function servePerson(index) {
+    const person = queue[index];
+    if (!person.idTurno) {
+        // Turno agregado manualmente sin BD
+        queue.splice(index, 1);
+        served++;
+        renderQueue();
+        return;
+    }
+    try {
+        const res = await fetch(`http://localhost:3001/turno/${person.idTurno}/atendido`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idAdmin, idEstablecimiento })
+        });
+        if (!res.ok) throw new Error('Error al marcar atendido');
+        served++;
+        await cargarCola(); // refresca la lista desde BD
+    } catch (err) {
+        alert('Error al marcar como atendido: ' + err.message);
+    }
+}
+
+// 🔥 Cancelar turno → cambia estado a Cancelado (4)
+async function cancelPerson(index) {
+    const person = queue[index];
+    if (!confirm(`¿Seguro que deseas cancelar el turno de ${person.name}?`)) return;
+
+    if (!person.idTurno) {
         queue.splice(index, 1);
         renderQueue();
+        return;
     }
+    try {
+        const res = await fetch(`http://localhost:3001/turno/${person.idTurno}/cancelar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idAdmin, idEstablecimiento })
+        });
+        if (!res.ok) throw new Error('Error al cancelar');
+        await cargarCola();
+    } catch (err) {
+        alert('Error al cancelar turno: ' + err.message);
+    }
+}
+
+async function callPerson(index) {
+    const person = queue[index];
+    if (!person.idTurno) {
+        alert('Llamando a: ' + person.name);
+        return;
+    }
+    try {
+        const res = await fetch(`http://localhost:3001/turno/${person.idTurno}/llamar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idAdmin })
+        });
+        if (!res.ok) throw new Error('Error');
+        showToast(`✅ Llamando a ${person.name}`);
+        await cargarCola();
+    } catch (e) {
+        alert('Error al llamar cliente');
+    }
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // ── Guardar configuración ─────────────────────────────────────
 function saveSettings() {
     const endTime   = document.getElementById('endTime').value;
     const maxPeople = document.getElementById('maxPeople').value;
-    if (!endTime)               { alert('Selecciona una hora de cierre.'); return; }
+    if (!endTime)                     { alert('Selecciona una hora de cierre.'); return; }
     if (!maxPeople || maxPeople <= 0) { alert('Ingresa una cantidad máxima válida.'); return; }
     alert(`Configuración guardada:\nEstado: ${isOpen ? 'Abierto' : 'Cerrado'}\nHora de cierre: ${endTime}\nMáximo en espera: ${maxPeople}`);
 }

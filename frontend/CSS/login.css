@@ -61,3 +61,51 @@ label {
   text-decoration: none;
 }
 .register-link a:hover { color: var(--accent); }
+.admin-fields {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-fields.visible {
+  display: flex;
+}
+
+.toggle-admin {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-admin span {
+  text-decoration: underline;
+  color: #aabd5a;
+}
+
+.show-error {
+  display: block;
+}
+
+.api-error {
+  text-align: center;
+}
+
+select {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--white);
+  outline: none;
+}
+
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(170, 189, 90, 0.2);
+}
