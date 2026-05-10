@@ -12,7 +12,7 @@ app.use(express.json());
 
 // Ruta raíz
 app.get("/", (req, res) => {
-    res.send("Servidor SmartQueue funcionando 🚀");
+  res.send("Servidor SmartQueue funcionando 🚀");
 });
 /**
  * @swagger
@@ -70,67 +70,90 @@ app.get("/", (req, res) => {
 app.post("/login", (req, res) => {
   const { correo, contrasena } = req.body;
 
-  db.query(
-    "CALL LoginUsuario(?, ?)",
-    [correo, contrasena],
-    (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Error del servidor" });
-      }
+  if (!correo || !contrasena) {
+    return res
+      .status(400)
+      .json({ error: "Correo y contraseña son requeridos" });
+  }
 
-      const data = results[0];
+  const sql = `
+    SELECT 
+      u.IDUsuario,
+      u.IDRol,
+      u.Nombre,
+      u.ApellidoPaterno,
+      u.ApellidoMaterno,
+      u.Telefono,
+      u.Correo,
+      u.Estatus,
+      r.NombreRol
+    FROM Usuario u
+    INNER JOIN Rol r ON u.IDRol = r.IDRol
+    WHERE u.Correo = ?
+      AND u.Contrasena = ?
+      AND u.Estatus = 'Activo'
+    LIMIT 1
+  `;
 
-      if (data.length === 0) {
-        return res.status(401).json({ error: "Credenciales incorrectas" });
-      }
-
-      res.json({
-        success: true,
-        usuario: data[0]
-      });
+  db.query(sql, [correo, contrasena], (err, results) => {
+    if (err) {
+      console.error("Error en login:", err);
+      return res.status(500).json({ error: "Error del servidor" });
     }
-  );
+
+    if (results.length === 0) {
+      return res.status(401).json({ error: "Credenciales incorrectas" });
+    }
+
+    res.json({
+      success: true,
+      usuario: results[0],
+    });
+  });
 });
 
 // ================= TURNOS =================
 app.post("/turnos", (req, res) => {
-    const { IDUsuario, IDServicio, CodigoTurno, NumeroTurno } = req.body;
+  const { IDUsuario, IDServicio, CodigoTurno, NumeroTurno } = req.body;
 
-    if (!IDUsuario || !IDServicio || !CodigoTurno || !NumeroTurno) {
-        return res.status(400).json({ error: "Faltan datos" });
-    }
+  if (!IDUsuario || !IDServicio || !CodigoTurno || !NumeroTurno) {
+    return res.status(400).json({ error: "Faltan datos" });
+  }
 
-    const sql = `
+  const sql = `
         INSERT INTO Turno 
         (IDUsuario, IDServicio, CodigoTurno, NumeroTurno)
         VALUES (?, ?, ?, ?)
     `;
 
-    db.query(sql, [IDUsuario, IDServicio, CodigoTurno, NumeroTurno], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Error al crear turno" });
-        }
+  db.query(
+    sql,
+    [IDUsuario, IDServicio, CodigoTurno, NumeroTurno],
+    (err, result) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Error al crear turno" });
+      }
 
-        res.status(201).json({
-            message: "Turno creado",
-            id: result.insertId
-        });
-    });
+      res.status(201).json({
+        message: "Turno creado",
+        id: result.insertId,
+      });
+    },
+  );
 });
 
 app.get("/turnos", (req, res) => {
-    const sql = "SELECT * FROM Turno";
+  const sql = "SELECT * FROM Turno";
 
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Error al obtener turnos" });
-        }
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Error al obtener turnos" });
+    }
 
-        res.json(results);
-    });
+    res.json(results);
+  });
 });
 /**
  * @swagger
@@ -167,16 +190,16 @@ app.get("/turnos", (req, res) => {
  */
 // ================= CATEGORIAS =================
 app.get("/categorias", (req, res) => {
-    const sql = "SELECT * FROM Categoria WHERE Estatus = 'Activo'";
+  const sql = "SELECT * FROM Categoria WHERE Estatus = 'Activo'";
 
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Error al obtener categorias" });
-        }
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Error al obtener categorias" });
+    }
 
-        res.json(results);
-    });
+    res.json(results);
+  });
 });
 /**
  * @swagger
@@ -198,9 +221,9 @@ app.get("/categorias", (req, res) => {
  */
 // ================= ESTABLECIMIENTOS =================
 app.get("/establecimientos/:categoria", (req, res) => {
-    const categoria = req.params.categoria;
+  const categoria = req.params.categoria;
 
-    const sql = `
+  const sql = `
         SELECT e.*
         FROM Establecimiento e
         INNER JOIN Categoria c ON e.IDCategoria = c.IDCategoria
@@ -208,27 +231,29 @@ app.get("/establecimientos/:categoria", (req, res) => {
         AND e.Estatus = 'Activo'
     `;
 
-    db.query(sql, [categoria], (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Error al obtener establecimientos" });
-        }
+  db.query(sql, [categoria], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res
+        .status(500)
+        .json({ error: "Error al obtener establecimientos" });
+    }
 
-        res.json(results);
-    });
+    res.json(results);
+  });
 });
 
 // ================= SWAGGER =================
 const swaggerOptions = {
-    swaggerDefinition: {
-        openapi: "3.0.0",
-        info: {
-            title: "API SmartQueue",
-            version: "1.0.0",
-            description: "API para gestión de turnos"
-        }
+  swaggerDefinition: {
+    openapi: "3.0.0",
+    info: {
+      title: "API SmartQueue",
+      version: "1.0.0",
+      description: "API para gestión de turnos",
     },
-    apis: ["./index.js"]
+  },
+  apis: ["./index.js"],
 };
 
 const swaggerDocs = swaggerJSDoc(swaggerOptions);
@@ -236,5 +261,5 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // ================= SERVER =================
 app.listen(3001, () => {
-    console.log("Servidor corriendo en http://localhost:3001");
+  console.log("Servidor corriendo en http://localhost:3001");
 });
