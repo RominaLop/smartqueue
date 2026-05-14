@@ -380,28 +380,43 @@ app.post('/turno/nuevo', (req, res) => {
   if (!idUsuario || !idServicio || !idEstablecimiento) {
     return res.status(400).json({ error: 'Faltan datos requeridos' });
   }
+
+  
   const sqlContar = `
-    SELECT COUNT(*) as total FROM Turno t
-    INNER JOIN Servicio s ON t.IDServicio = s.IDServicio
-    WHERE s.IDEstablecimiento = ? AND t.IDEstadoTurno IN (1, 2)
-  `;
+  SELECT 
+    COUNT(CASE WHEN t.IDEstadoTurno IN (1, 2) THEN 1 END) as total,
+    COALESCE(MAX(t.NumeroTurno), 0) as maxNumero
+  FROM Turno t
+  INNER JOIN Servicio s ON t.IDServicio = s.IDServicio
+  WHERE s.IDEstablecimiento = ?
+`;
+
   db.query(sqlContar, [idEstablecimiento], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
+
     const personasDelante = result[0].total;
-    const numeroTurno     = personasDelante + 1;
-    const codigoTurno     = `A-${String(numeroTurno).padStart(2, '0')}`;
-    const tiempoEstimado  = personasDelante * 5;
+    const maxNumero = result[0].maxNumero;
+    const numeroTurno = maxNumero + 1;           // ← siempre mayor al último existente
+    const codigoTurno = `A-${String(numeroTurno).padStart(2, '0')}`;
+    const tiempoEstimado = personasDelante * 5;
+
     const sqlInsert = `
       INSERT INTO Turno (IDUsuario, IDServicio, IDEstadoTurno, CodigoTurno, NumeroTurno, PersonasDelante, TiempoEstimadoMin)
       VALUES (?, ?, 1, ?, ?, ?, ?)
     `;
+
     db.query(sqlInsert, [idUsuario, idServicio, codigoTurno, numeroTurno, personasDelante, tiempoEstimado], (err2, result2) => {
-      if (err2) return res.status(500).json({ error: err2.message });
+      if (err2) {
+        console.error('❌ Error INSERT Turno:', err2.message);
+        return res.status(500).json({ error: err2.message });
+      }
+
       const sqlHistorial = `
         INSERT INTO HistorialTurno (IDTurno, IDEstadoAnterior, IDEstadoNuevo, IDAdministrador, Comentario)
         VALUES (?, NULL, 1, NULL, 'Turno creado por el cliente.')
       `;
       db.query(sqlHistorial, [result2.insertId]);
+
       res.json({ success: true, codigoTurno, numeroTurno, personasDelante, tiempoEstimadoMin: tiempoEstimado, idTurno: result2.insertId });
     });
   });
@@ -445,7 +460,7 @@ app.get('/turno/:idTurno/estado', (req, res) => {
   db.query(sql, [idTurno], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (results.length === 0) return res.status(404).json({ error: 'Turno no encontrado' });
-    const t        = results[0];
+    const t = results[0];
     const progreso = t.PersonasDelante === 0 ? 100 : Math.max(0, 100 - (t.PersonasDelante * 10));
     res.json({ ...t, progreso });
   });

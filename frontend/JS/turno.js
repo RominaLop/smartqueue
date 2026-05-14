@@ -47,7 +47,7 @@ let idTurnoActual     = null;
 let countdownVal      = 5;
 let countdownTimer    = null;
 let autoRefreshTimer  = null;
-let yaNotificado      = false; // evitar repetir notificación
+let yaNotificado      = false;
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -87,6 +87,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     iniciarAutoRefresh();
     renderExtra();
+
+    // ── FIX SCROLL: asegura que el body y la card sean scrolleables ──
+    document.body.style.overflowY    = 'auto';
+    document.body.style.height       = '100%';
+    const card = document.querySelector('.turno-card');
+    if (card) {
+        card.style.overflowY  = 'auto';
+        card.style.maxHeight  = '100vh';
+        card.style.scrollbarWidth = 'thin'; // Firefox
+        card.style.scrollbarColor = '#a8b56a transparent';
+    }
+    // Webkit scrollbar (Chrome/Safari) — inyecta estilo dinámico
+    const style = document.createElement('style');
+    style.textContent = `
+        .turno-card::-webkit-scrollbar { width: 4px; }
+        .turno-card::-webkit-scrollbar-thumb { background: #a8b56a; border-radius: 4px; }
+        .turno-card::-webkit-scrollbar-track { background: transparent; }
+        body::-webkit-scrollbar { width: 4px; }
+        body::-webkit-scrollbar-thumb { background: #a8b56a; border-radius: 4px; }
+    `;
+    document.head.appendChild(style);
 });
 
 // ── Tomar turno ───────────────────────────────────────────────
@@ -100,7 +121,7 @@ async function tomarTurno() {
     }
 
     try {
-        const resServ  = await fetch(`http://localhost:3001/servicios/${idEstablecimiento}`);
+        const resServ   = await fetch(`http://localhost:3001/servicios/${idEstablecimiento}`);
         const servicios = await resServ.json();
         if (!servicios || servicios.length === 0) {
             console.warn('No hay servicios disponibles');
@@ -119,13 +140,16 @@ async function tomarTurno() {
             idTurnoActual = data.idTurno;
             sessionStorage.setItem('idTurno', idTurnoActual);
 
+            // Mostrar datos iniciales del turno recién creado
             setVal('mi-turno',         data.codigoTurno);
             setVal('personas-delante', data.personasDelante);
-            setVal('tiempo-estimado',  `${data.tiempoEstimadoMin} min`);
-            setVal('turno-actual',     '–');
+            setVal('tiempo-estimado',  data.tiempoEstimadoMin > 0 ? `${data.tiempoEstimadoMin} min` : '< 5 min');
             setVal('status-text',      'En espera');
 
-            const pct = data.personasDelante === 0 ? 100 : 0;
+            // Turno actual: si soy el primero, mi turno ES el actual
+            setVal('turno-actual', data.personasDelante === 0 ? data.codigoTurno : '–');
+
+            const pct = data.personasDelante === 0 ? 100 : Math.max(0, 100 - (data.personasDelante * 10));
             document.getElementById('pct').textContent           = `${pct}%`;
             document.getElementById('progress-fill').style.width = `${pct}%`;
 
@@ -137,24 +161,43 @@ async function tomarTurno() {
     }
 }
 
-// ── Actualizar turno desde BD ─────────────────────────────────
+// ── Actualizar turno desde BD (con cola en tiempo real) ───────
 async function actualizarTurno() {
     if (!idTurnoActual || !idEstablecimiento) return;
 
     try {
-        const res  = await fetch(`http://localhost:3001/turno/${idTurnoActual}/estado`);
-        if (!res.ok) throw new Error('Sin respuesta');
-        const data = await res.json();
+        
+        const [resTurno, reCola] = await Promise.all([
+            fetch(`http://localhost:3001/turno/${idTurnoActual}/estado`),
+            fetch(`http://localhost:3001/cola/${idEstablecimiento}`)
+        ]);
 
-        setVal('mi-turno',         data.CodigoTurno    ?? '–');
-        setVal('turno-actual',     data.turnoActual     ?? '–');
-        setVal('personas-delante', data.PersonasDelante ?? '–');
-        setVal('tiempo-estimado',  data.TiempoEstimadoMin ? `${data.TiempoEstimadoMin} min` : '–');
+        if (!resTurno.ok) throw new Error('Sin respuesta del turno');
 
-        const pct = data.progreso ?? 0;
+        const data = await resTurno.json();
+        const cola = reCola.ok ? await reCola.json() : [];
+
+        
+        const miPosEnCola   = cola.findIndex(t => String(t.IDTurno) === String(idTurnoActual));
+        // Si mi turno ya no aparece en la cola (atendido/cancelado), miPosEnCola = -1
+        const personasDelante = miPosEnCola > 0 ? miPosEnCola : (miPosEnCola === 0 ? 0 : data.PersonasDelante ?? 0);
+        const tiempoReal      = personasDelante * 5;
+
+        
+        const turnoActualCodigo = cola.length > 0 ? cola[0].CodigoTurno : (data.CodigoTurno ?? '–');
+
+        
+        setVal('mi-turno',         data.CodigoTurno ?? '–');
+        setVal('turno-actual',     turnoActualCodigo);
+        setVal('personas-delante', personasDelante);
+        setVal('tiempo-estimado',  tiempoReal > 0 ? `${tiempoReal} min` : '< 5 min');
+
+        
+        const pct = personasDelante === 0 ? 100 : Math.max(5, 100 - (personasDelante * 10));
         document.getElementById('pct').textContent           = `${pct}%`;
         document.getElementById('progress-fill').style.width = `${pct}%`;
 
+        
         const estado = data.NombreEstado || 'En espera';
         setVal('status-text', estado);
 
@@ -164,11 +207,10 @@ async function actualizarTurno() {
                 (estado === 'En atención' ? 'green' : estado === 'Cancelado' ? 'red' : '');
         }
 
-        // 🔔 Notificación cuando el admin llama al cliente
+        
         if (estado === 'En atención' && !yaNotificado) {
             yaNotificado = true;
 
-            // Notificación del navegador
             if (Notification.permission === 'granted') {
                 new Notification('¡Te están llamando! 🔔', {
                     body: `${placeName} te está llamando. Por favor acércate al mostrador.`,
@@ -176,7 +218,6 @@ async function actualizarTurno() {
                 });
             }
 
-            // Banner visual
             const banner = document.getElementById('notify-banner');
             if (banner) {
                 banner.style.display = 'flex';
@@ -184,37 +225,38 @@ async function actualizarTurno() {
                 if (bannerText) bannerText.textContent = '¡Te están llamando! Acércate al mostrador 🏃';
             }
 
-            // Toast también
             showToast('🔔 ¡Es tu turno! Acércate al mostrador');
         }
 
-        // Banner de "casi tu turno" cuando hay pocas personas delante
+        
         if (estado !== 'En atención') {
             const banner = document.getElementById('notify-banner');
             if (banner) {
-                if (data.PersonasDelante <= 2 && data.PersonasDelante > 0) {
+                if (personasDelante <= 2 && personasDelante > 0) {
                     banner.style.display = 'flex';
                     const bannerText = banner.querySelector('p');
-                    if (bannerText) bannerText.textContent = `¡Casi es tu turno! Solo ${data.PersonasDelante} persona(s) delante.`;
-                } else if (data.PersonasDelante > 2) {
+                    if (bannerText) bannerText.textContent = `¡Casi es tu turno! Solo ${personasDelante} persona(s) delante.`;
+                } else if (personasDelante > 2) {
                     banner.style.display = 'none';
                 }
             }
         }
 
-        // Si finalizado o cancelado, limpiar sesión de turno
+        // Limpiar sesión si el turno terminó
         if (estado === 'Finalizado' || estado === 'Cancelado') {
             sessionStorage.removeItem('idTurno');
             idTurnoActual = null;
+            clearInterval(autoRefreshTimer);
+            clearInterval(countdownTimer);
         }
 
         resetCountdown();
     } catch (e) {
-        console.warn('No se pudo obtener turno:', e);
+        console.warn('No se pudo actualizar turno:', e);
     }
 }
 
-// ── Cancelar turno ────────────────────────────────────────────
+
 async function cancelarTurno() {
     if (!confirm('¿Seguro que deseas cancelar tu turno?')) return;
     if (!idTurnoActual) { showToast('No tienes un turno activo'); return; }
@@ -235,7 +277,7 @@ async function cancelarTurno() {
     }
 }
 
-// ── Auto-refresh cada 5 segundos ──────────────────────────────
+
 function iniciarAutoRefresh() {
     clearInterval(autoRefreshTimer);
     clearInterval(countdownTimer);
@@ -260,14 +302,14 @@ function resetCountdown() {
     if (el) el.textContent = 5;
 }
 
-// ── Sección extra por categoría ───────────────────────────────
+
 function renderExtra() {
     const esRestaurante = Object.keys(INFO_RESTAURANTES).includes(placeName);
     const esClinica     = Object.keys(HORARIOS_CLINICA).includes(placeName);
     if (!esRestaurante && !esClinica) return;
 
-    const card   = document.querySelector('.turno-card');
-    const btnRow = card.querySelector('.btn-row');
+    const card    = document.querySelector('.turno-card');
+    const btnRow  = card.querySelector('.btn-row');
     const section = document.createElement('div');
     section.className = 'extra-section';
 
@@ -332,7 +374,7 @@ function irARestaurante(nombre) {
     window.location.reload();
 }
 
-// ── Helpers ───────────────────────────────────────────────────
+
 function setVal(id, val) {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
