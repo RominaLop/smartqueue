@@ -39,7 +39,6 @@ const INFO_RESTAURANTES = {
     "Taboo":         { rating: 4.5, precio: "$$$", tipo: "Beach club" }
 };
 
-// ── Estado global ─────────────────────────────────────────────
 let placeName         = '';
 let categoria         = '';
 let idEstablecimiento = null;
@@ -49,13 +48,13 @@ let countdownTimer    = null;
 let autoRefreshTimer  = null;
 let yaNotificado      = false;
 
-// ── Init ──────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', async () => {
     placeName     = sessionStorage.getItem('smartqueue_place') || '';
     categoria     = sessionStorage.getItem('smartqueue_categoria') || '';
     idTurnoActual = sessionStorage.getItem('idTurno') || null;
 
-    // Pedir permiso de notificaciones
+
     if (Notification.permission === 'default') {
         Notification.requestPermission();
     }
@@ -63,8 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const serviceEl = document.getElementById('service-name');
     if (serviceEl) serviceEl.textContent = placeName || 'Sin servicio';
 
-    // ✅ FIX PRINCIPAL: SIEMPRE resolver idEstablecimiento por nombre desde el backend
-    // Nunca confiar en el valor cacheado (puede pertenecer a otro lugar)
+
     if (placeName) {
         try {
             const res  = await fetch(`http://localhost:3001/establecimiento/buscar?nombre=${encodeURIComponent(placeName)}`);
@@ -87,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Si el cliente no tiene turno aún, tomarlo automáticamente
+
     if (!idTurnoActual) {
         await tomarTurno();
     } else {
@@ -97,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     iniciarAutoRefresh();
     renderExtra();
 
-    // ── Scroll ──
+
     document.body.style.overflowY = 'auto';
     document.body.style.height    = '100%';
     const card = document.querySelector('.turno-card');
@@ -118,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.head.appendChild(style);
 });
 
-// ── Tomar turno ───────────────────────────────────────────────
+
 async function tomarTurno() {
     const usuario   = JSON.parse(sessionStorage.getItem('usuario') || '{}');
     const idUsuario = usuario.IDUsuario;
@@ -188,7 +186,6 @@ async function tomarTurno() {
     }
 }
 
-// ── Actualizar turno desde BD (con cola en tiempo real) ───────
 async function actualizarTurno() {
     if (!idTurnoActual || !idEstablecimiento) return;
 
@@ -212,12 +209,12 @@ async function actualizarTurno() {
         const data = await resTurno.json();
         const cola = reCola.ok ? await reCola.json() : [];
 
-        // Calcular posición REAL en la cola
+
         const miPosEnCola     = cola.findIndex(t => String(t.IDTurno) === String(idTurnoActual));
         const personasDelante = miPosEnCola > 0 ? miPosEnCola : (miPosEnCola === 0 ? 0 : data.PersonasDelante ?? 0);
         const tiempoReal      = personasDelante * 5;
 
-        // Turno actual = el primero de la cola
+
         const turnoActualCodigo = cola.length > 0 ? cola[0].CodigoTurno : (data.CodigoTurno ?? '–');
 
         setVal('mi-turno',         data.CodigoTurno ?? '–');
@@ -238,7 +235,6 @@ async function actualizarTurno() {
                 (estado === 'En atención' ? 'green' : estado === 'Cancelado' ? 'red' : '');
         }
 
-        // 🔔 Notificación cuando el admin llama al cliente
         if (estado === 'En atención' && !yaNotificado) {
             yaNotificado = true;
 
@@ -259,7 +255,7 @@ async function actualizarTurno() {
             showToast('🔔 ¡Es tu turno! Acércate al mostrador');
         }
 
-        // Banner "casi tu turno"
+
         if (estado !== 'En atención') {
             const banner = document.getElementById('notify-banner');
             if (banner) {
@@ -273,7 +269,7 @@ async function actualizarTurno() {
             }
         }
 
-        // Limpiar sesión si el turno terminó
+
         if (estado === 'Finalizado' || estado === 'Cancelado') {
             sessionStorage.removeItem('idTurno');
             idTurnoActual = null;
