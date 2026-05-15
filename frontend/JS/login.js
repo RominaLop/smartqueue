@@ -4,7 +4,7 @@
 
 console.log("JS cargado");
 
-// ── Nombres reales por tipo de negocio ────────────────────────
+
 const EJEMPLOS = {
     banco: [
         "BBVA México", "Banorte", "Citibanamex", "Santander",
@@ -18,7 +18,7 @@ const EJEMPLOS = {
     universidad: ["Universidad SmartQueue"]
 };
 
-// ── Toggle campos admin ───────────────────────────────────────
+
 let isAdminMode = false;
 
 document.getElementById('toggleAdmin').addEventListener('click', () => {
@@ -35,7 +35,7 @@ document.getElementById('toggleAdmin').addEventListener('click', () => {
     }
 });
 
-// ── Placeholder dinámico al cambiar tipo ──────────────────────
+
 document.getElementById('businessType').addEventListener('change', actualizarPlaceholder);
 
 function actualizarPlaceholder() {
@@ -45,7 +45,7 @@ function actualizarPlaceholder() {
     document.getElementById('businessName').placeholder = `Ej: ${ejemplo}`;
 }
 
-// ── Login ─────────────────────────────────────────────────────
+
 document.getElementById('loginForm').addEventListener('submit', handleLogin);
 
 async function handleLogin(e) {

@@ -163,13 +163,13 @@
   animation: blink 2s infinite;
 }
 
-/* ── Sección extra (añadir al final de turno.css) ─────────── */
+
 
 .extra-section {
   margin-top: 16px;
 }
 
-/* ── Clínica ─────────────────────────────────────────────────*/
+
 .extra-clinica {
   display: flex;
   flex-direction: column;
@@ -214,7 +214,7 @@
   line-height: 1.5;
 }
 
-/* ── Restaurantes ────────────────────────────────────────────*/
+
 .extra-restaurantes {
   background: #fff;
   border-radius: 16px;

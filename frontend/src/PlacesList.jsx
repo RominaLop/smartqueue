@@ -96,13 +96,11 @@ function PlacesList({ onGoToTurno }) {
     window.location.reload()
   }
 
-  const goToQueue = (place) => {
-    localStorage.setItem('smartqueue_place', place.NombreEstablecimiento)
-    localStorage.setItem('smartqueue_categoria', activeCategory)
 
-    if (onGoToTurno) {
-      onGoToTurno()
-    }
+  const goToQueue = (place) => {
+    sessionStorage.setItem('smartqueue_place', place.NombreEstablecimiento)
+    sessionStorage.setItem('smartqueue_categoria', activeCategory)
+    if (onGoToTurno) onGoToTurno()
   }
 
   const filteredPlaces = places.filter((place) =>
@@ -136,9 +134,8 @@ function PlacesList({ onGoToTurno }) {
           {categorias.map((cat) => (
             <button
               key={cat.IDCategoria}
-              className={`cat-btn ${
-                cat.NombreCategoria === activeCategory ? 'active' : ''
-              }`}
+              className={`cat-btn ${cat.NombreCategoria === activeCategory ? 'active' : ''
+                }`}
               onClick={() => setActiveCategory(cat.NombreCategoria)}
             >
               {cat.NombreCategoria === activeCategory ? '✓ ' : ''}

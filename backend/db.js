@@ -4,7 +4,7 @@ const mysql = require("mysql2");
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "rominamysql1110#$", // tu contraseña de MySQL
+    password: "rominamysql1110#$", 
     database: "SmartQueueDB"
 });
 

@@ -11,10 +11,38 @@
 
 body {
   min-height: 100vh;
-  background: #e8ead7;
+  background: #dfe9b7;
   color: #2d2d2d;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  overflow-x: hidden;
+  position: relative;
+}
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  background: rgba(181, 201, 109, 0.35);
+  z-index: -1;
 }
 
+body::before {
+  width: 260px;
+  height: 260px;
+  top: -80px;
+  left: -80px;
+}
+
+body::after {
+  width: 300px;
+  height: 300px;
+  bottom: -120px;
+  right: -120px;
+}
 .phone-container {
   max-width: 430px;
   min-height: 100vh;
@@ -23,7 +51,6 @@ body {
   padding: 22px;
   position: relative;
 }
-
 /* ── Top bar ─────────────────────────────────────────────────── */
 .top-bar {
   display: flex;

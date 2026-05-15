@@ -32,7 +32,6 @@ const IMAGES = {
 let categorias = []; // 🔥 ahora vienen de MySQL
 let activeCategory = null;
 
-// ── Sesión ────────────────────────────────────────────────────
 function loadSession() {
     const user = JSON.parse(sessionStorage.getItem('usuario') || '{}');
     const name = user.Nombre || user.email || 'Usuario';
@@ -48,7 +47,7 @@ function logout() {
     window.location.href = '../HTML/index.html';
 }
 
-// ── 🔥 BACKEND: obtener categorías ────────────────────────────
+
 async function getCategorias() {
     try {
         const res = await fetch("http://localhost:3001/categorias");
@@ -68,7 +67,7 @@ async function getEstablecimientos(categoria) {
         return [];
     }
 }
-// ── Categorías (dinámico) ─────────────────────────────────────
+
 function renderCategories() {
     const container = document.getElementById('categories');
 
@@ -86,7 +85,7 @@ function selectCategory(cat) {
     renderPlaces();
 }
 
-// ── Skeletons ─────────────────────────────────────────────────
+
 function renderSkeletons() {
     document.getElementById('grid').innerHTML = Array(8).fill(`
     <div class="skeleton">
@@ -135,20 +134,20 @@ async function renderPlaces() {
     }
 }
 
-// ── Navegación ────────────────────────────────────────────────
+
 function goToQueue(placeName) {
     sessionStorage.setItem('smartqueue_place', placeName);
     sessionStorage.setItem('smartqueue_categoria', activeCategory);
     window.location.href = '../HTML/turno.html';
 }
 
-// ── Init ──────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', async () => {
     loadSession();
 
     categorias = await getCategorias();
 
-    // seleccionar primera categoría automáticamente
+
     if (categorias.length > 0) {
         activeCategory = categorias[0].NombreCategoria;
     }

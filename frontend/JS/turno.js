@@ -39,7 +39,6 @@ const INFO_RESTAURANTES = {
     "Taboo":         { rating: 4.5, precio: "$$$", tipo: "Beach club" }
 };
 
-// ── Estado global ─────────────────────────────────────────────
 let placeName         = '';
 let categoria         = '';
 let idEstablecimiento = null;
@@ -47,16 +46,15 @@ let idTurnoActual     = null;
 let countdownVal      = 5;
 let countdownTimer    = null;
 let autoRefreshTimer  = null;
-let yaNotificado      = false; // evitar repetir notificación
+let yaNotificado      = false;
 
-// ── Init ──────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', async () => {
-    placeName         = sessionStorage.getItem('smartqueue_place') || '';
-    categoria         = sessionStorage.getItem('smartqueue_categoria') || '';
-    idEstablecimiento = sessionStorage.getItem('idEstablecimiento') || null;
-    idTurnoActual     = sessionStorage.getItem('idTurno') || null;
+    placeName     = sessionStorage.getItem('smartqueue_place') || '';
+    categoria     = sessionStorage.getItem('smartqueue_categoria') || '';
+    idTurnoActual = sessionStorage.getItem('idTurno') || null;
 
-    // Pedir permiso de notificaciones
+
     if (Notification.permission === 'default') {
         Notification.requestPermission();
     }
@@ -64,22 +62,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const serviceEl = document.getElementById('service-name');
     if (serviceEl) serviceEl.textContent = placeName || 'Sin servicio';
 
-    // Si no tenemos idEstablecimiento, buscarlo por nombre
-    if (!idEstablecimiento && placeName) {
+
+    if (placeName) {
         try {
             const res  = await fetch(`http://localhost:3001/establecimiento/buscar?nombre=${encodeURIComponent(placeName)}`);
             const data = await res.json();
             if (data && data.IDEstablecimiento) {
                 idEstablecimiento = data.IDEstablecimiento;
                 sessionStorage.setItem('idEstablecimiento', idEstablecimiento);
+                console.log('✅ idEstablecimiento para', placeName, ':', idEstablecimiento);
+            } else {
+                console.error('❌ No se encontró establecimiento para:', placeName);
             }
         } catch (e) {
             console.warn('No se pudo obtener establecimiento:', e);
         }
     }
 
-    // Si el cliente no tiene turno aún, tomarlo automáticamente
-    if (!idTurnoActual && idEstablecimiento) {
+    if (!idEstablecimiento) {
+        console.error('❌ Sin idEstablecimiento, no se puede continuar');
+        setVal('status-text', 'Error: lugar no encontrado');
+        return;
+    }
+
+
+    if (!idTurnoActual) {
         await tomarTurno();
     } else {
         await actualizarTurno();
@@ -87,33 +94,75 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     iniciarAutoRefresh();
     renderExtra();
+
+
+    document.body.style.overflowY = 'auto';
+    document.body.style.height    = '100%';
+    const card = document.querySelector('.turno-card');
+    if (card) {
+        card.style.overflowY      = 'auto';
+        card.style.maxHeight      = '100vh';
+        card.style.scrollbarWidth = 'thin';
+        card.style.scrollbarColor = '#a8b56a transparent';
+    }
+    const style = document.createElement('style');
+    style.textContent = `
+        .turno-card::-webkit-scrollbar { width: 4px; }
+        .turno-card::-webkit-scrollbar-thumb { background: #a8b56a; border-radius: 4px; }
+        .turno-card::-webkit-scrollbar-track { background: transparent; }
+        body::-webkit-scrollbar { width: 4px; }
+        body::-webkit-scrollbar-thumb { background: #a8b56a; border-radius: 4px; }
+    `;
+    document.head.appendChild(style);
 });
 
-// ── Tomar turno ───────────────────────────────────────────────
+
 async function tomarTurno() {
     const usuario   = JSON.parse(sessionStorage.getItem('usuario') || '{}');
     const idUsuario = usuario.IDUsuario;
 
+    console.log('🟡 tomarTurno() → idUsuario:', idUsuario, '| idEstablecimiento:', idEstablecimiento);
+
     if (!idUsuario || !idEstablecimiento) {
-        console.warn('Faltan datos para tomar turno');
+        console.warn('❌ Faltan datos para tomar turno');
         return;
     }
 
     try {
-        const resServ  = await fetch(`http://localhost:3001/servicios/${idEstablecimiento}`);
+        const resServ   = await fetch(`http://localhost:3001/servicios/${idEstablecimiento}`);
         const servicios = await resServ.json();
+        console.log('📋 Servicios de', placeName, ':', servicios);
+
         if (!servicios || servicios.length === 0) {
-            console.warn('No hay servicios disponibles');
+            console.warn('❌ No hay servicios para este establecimiento');
+            setVal('status-text', 'Sin servicios disponibles');
             return;
         }
+
         const idServicio = servicios[0].IDServicio;
+        console.log('✅ Usando idServicio:', idServicio);
+
+        const payload = {
+            idUsuario,
+            idServicio,
+            idEstablecimiento: Number(idEstablecimiento)
+        };
+        console.log('📤 Enviando a /turno/nuevo:', payload);
 
         const res  = await fetch('http://localhost:3001/turno/nuevo', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ idUsuario, idServicio, idEstablecimiento })
+            body:    JSON.stringify(payload)
         });
+
         const data = await res.json();
+        console.log('📥 Respuesta /turno/nuevo:', data);
+
+        if (!res.ok) {
+            console.error('❌ Error del servidor al crear turno:', data.error);
+            setVal('status-text', 'Error al tomar turno');
+            return;
+        }
 
         if (data.success) {
             idTurnoActual = data.idTurno;
@@ -121,11 +170,11 @@ async function tomarTurno() {
 
             setVal('mi-turno',         data.codigoTurno);
             setVal('personas-delante', data.personasDelante);
-            setVal('tiempo-estimado',  `${data.tiempoEstimadoMin} min`);
-            setVal('turno-actual',     '–');
+            setVal('tiempo-estimado',  data.tiempoEstimadoMin > 0 ? `${data.tiempoEstimadoMin} min` : '< 5 min');
             setVal('status-text',      'En espera');
+            setVal('turno-actual',     data.personasDelante === 0 ? data.codigoTurno : '–');
 
-            const pct = data.personasDelante === 0 ? 100 : 0;
+            const pct = data.personasDelante === 0 ? 100 : Math.max(0, 100 - (data.personasDelante * 10));
             document.getElementById('pct').textContent           = `${pct}%`;
             document.getElementById('progress-fill').style.width = `${pct}%`;
 
@@ -133,25 +182,47 @@ async function tomarTurno() {
             if (dot) dot.className = 'status-dot';
         }
     } catch (e) {
-        console.warn('Error al tomar turno:', e);
+        console.error('❌ Error al tomar turno:', e);
     }
 }
 
-// ── Actualizar turno desde BD ─────────────────────────────────
 async function actualizarTurno() {
     if (!idTurnoActual || !idEstablecimiento) return;
 
     try {
-        const res  = await fetch(`http://localhost:3001/turno/${idTurnoActual}/estado`);
-        if (!res.ok) throw new Error('Sin respuesta');
-        const data = await res.json();
+        const [resTurno, reCola] = await Promise.all([
+            fetch(`http://localhost:3001/turno/${idTurnoActual}/estado`),
+            fetch(`http://localhost:3001/cola/${idEstablecimiento}`)
+        ]);
 
-        setVal('mi-turno',         data.CodigoTurno    ?? '–');
-        setVal('turno-actual',     data.turnoActual     ?? '–');
-        setVal('personas-delante', data.PersonasDelante ?? '–');
-        setVal('tiempo-estimado',  data.TiempoEstimadoMin ? `${data.TiempoEstimadoMin} min` : '–');
+        // Si el turno ya no existe en BD, limpiar y tomar uno nuevo
+        if (resTurno.status === 404) {
+            console.warn('⚠️ Turno no encontrado en BD, limpiando sesión');
+            sessionStorage.removeItem('idTurno');
+            idTurnoActual = null;
+            await tomarTurno();
+            return;
+        }
 
-        const pct = data.progreso ?? 0;
+        if (!resTurno.ok) throw new Error('Sin respuesta del turno');
+
+        const data = await resTurno.json();
+        const cola = reCola.ok ? await reCola.json() : [];
+
+
+        const miPosEnCola     = cola.findIndex(t => String(t.IDTurno) === String(idTurnoActual));
+        const personasDelante = miPosEnCola > 0 ? miPosEnCola : (miPosEnCola === 0 ? 0 : data.PersonasDelante ?? 0);
+        const tiempoReal      = personasDelante * 5;
+
+
+        const turnoActualCodigo = cola.length > 0 ? cola[0].CodigoTurno : (data.CodigoTurno ?? '–');
+
+        setVal('mi-turno',         data.CodigoTurno ?? '–');
+        setVal('turno-actual',     turnoActualCodigo);
+        setVal('personas-delante', personasDelante);
+        setVal('tiempo-estimado',  tiempoReal > 0 ? `${tiempoReal} min` : '< 5 min');
+
+        const pct = personasDelante === 0 ? 100 : Math.max(5, 100 - (personasDelante * 10));
         document.getElementById('pct').textContent           = `${pct}%`;
         document.getElementById('progress-fill').style.width = `${pct}%`;
 
@@ -164,11 +235,9 @@ async function actualizarTurno() {
                 (estado === 'En atención' ? 'green' : estado === 'Cancelado' ? 'red' : '');
         }
 
-        // 🔔 Notificación cuando el admin llama al cliente
         if (estado === 'En atención' && !yaNotificado) {
             yaNotificado = true;
 
-            // Notificación del navegador
             if (Notification.permission === 'granted') {
                 new Notification('¡Te están llamando! 🔔', {
                     body: `${placeName} te está llamando. Por favor acércate al mostrador.`,
@@ -176,7 +245,6 @@ async function actualizarTurno() {
                 });
             }
 
-            // Banner visual
             const banner = document.getElementById('notify-banner');
             if (banner) {
                 banner.style.display = 'flex';
@@ -184,33 +252,34 @@ async function actualizarTurno() {
                 if (bannerText) bannerText.textContent = '¡Te están llamando! Acércate al mostrador 🏃';
             }
 
-            // Toast también
             showToast('🔔 ¡Es tu turno! Acércate al mostrador');
         }
 
-        // Banner de "casi tu turno" cuando hay pocas personas delante
+
         if (estado !== 'En atención') {
             const banner = document.getElementById('notify-banner');
             if (banner) {
-                if (data.PersonasDelante <= 2 && data.PersonasDelante > 0) {
+                if (personasDelante <= 2 && personasDelante > 0) {
                     banner.style.display = 'flex';
                     const bannerText = banner.querySelector('p');
-                    if (bannerText) bannerText.textContent = `¡Casi es tu turno! Solo ${data.PersonasDelante} persona(s) delante.`;
-                } else if (data.PersonasDelante > 2) {
+                    if (bannerText) bannerText.textContent = `¡Casi es tu turno! Solo ${personasDelante} persona(s) delante.`;
+                } else if (personasDelante > 2) {
                     banner.style.display = 'none';
                 }
             }
         }
 
-        // Si finalizado o cancelado, limpiar sesión de turno
+
         if (estado === 'Finalizado' || estado === 'Cancelado') {
             sessionStorage.removeItem('idTurno');
             idTurnoActual = null;
+            clearInterval(autoRefreshTimer);
+            clearInterval(countdownTimer);
         }
 
         resetCountdown();
     } catch (e) {
-        console.warn('No se pudo obtener turno:', e);
+        console.warn('No se pudo actualizar turno:', e);
     }
 }
 
@@ -266,8 +335,8 @@ function renderExtra() {
     const esClinica     = Object.keys(HORARIOS_CLINICA).includes(placeName);
     if (!esRestaurante && !esClinica) return;
 
-    const card   = document.querySelector('.turno-card');
-    const btnRow = card.querySelector('.btn-row');
+    const card    = document.querySelector('.turno-card');
+    const btnRow  = card.querySelector('.btn-row');
     const section = document.createElement('div');
     section.className = 'extra-section';
 
