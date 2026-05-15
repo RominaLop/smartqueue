@@ -11,8 +11,15 @@
 
 body {
   min-height: 100vh;
-  background: #e8ead7;
+  background: #dfe9b7;
   color: #2d2d2d;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  overflow-x: hidden;
+  position: relative;
 }
 
 .phone-container {
@@ -23,7 +30,6 @@ body {
   padding: 22px;
   position: relative;
 }
-
 /* ── Top bar ─────────────────────────────────────────────────── */
 .top-bar {
   display: flex;

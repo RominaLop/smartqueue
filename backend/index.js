@@ -377,28 +377,37 @@ app.get("/turnos", (req, res) => {
  */
 app.post('/turno/nuevo', (req, res) => {
   const { idUsuario, idServicio, idEstablecimiento } = req.body;
+  console.log('📥 /turno/nuevo recibido:', { idUsuario, idServicio, idEstablecimiento });
+
   if (!idUsuario || !idServicio || !idEstablecimiento) {
+    console.error('❌ Faltan datos:', { idUsuario, idServicio, idEstablecimiento });
     return res.status(400).json({ error: 'Faltan datos requeridos' });
   }
 
-  
   const sqlContar = `
-  SELECT 
-    COUNT(CASE WHEN t.IDEstadoTurno IN (1, 2) THEN 1 END) as total,
-    COALESCE(MAX(t.NumeroTurno), 0) as maxNumero
-  FROM Turno t
-  INNER JOIN Servicio s ON t.IDServicio = s.IDServicio
-  WHERE s.IDEstablecimiento = ?
-`;
+    SELECT 
+      COUNT(CASE WHEN t.IDEstadoTurno IN (1, 2) THEN 1 END) as total,
+      COALESCE(MAX(t.NumeroTurno), 0) as maxNumero
+    FROM Turno t
+    INNER JOIN Servicio s ON t.IDServicio = s.IDServicio
+    WHERE s.IDEstablecimiento = ?
+  `;
 
   db.query(sqlContar, [idEstablecimiento], (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error('❌ Error sqlContar:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+
+    console.log('📊 Resultado sqlContar:', result[0]);
 
     const personasDelante = result[0].total;
-    const maxNumero = result[0].maxNumero;
-    const numeroTurno = maxNumero + 1;           // ← siempre mayor al último existente
-    const codigoTurno = `A-${String(numeroTurno).padStart(2, '0')}`;
-    const tiempoEstimado = personasDelante * 5;
+    const maxNumero       = result[0].maxNumero;
+    const numeroTurno     = maxNumero + 1;
+    const codigoTurno     = `A-${String(numeroTurno).padStart(2, '0')}`;
+    const tiempoEstimado  = personasDelante * 5;
+
+    console.log('🎫 Generando turno:', { codigoTurno, numeroTurno, personasDelante, tiempoEstimado });
 
     const sqlInsert = `
       INSERT INTO Turno (IDUsuario, IDServicio, IDEstadoTurno, CodigoTurno, NumeroTurno, PersonasDelante, TiempoEstimadoMin)
@@ -411,11 +420,15 @@ app.post('/turno/nuevo', (req, res) => {
         return res.status(500).json({ error: err2.message });
       }
 
+      console.log('✅ Turno insertado con ID:', result2.insertId);
+
       const sqlHistorial = `
         INSERT INTO HistorialTurno (IDTurno, IDEstadoAnterior, IDEstadoNuevo, IDAdministrador, Comentario)
         VALUES (?, NULL, 1, NULL, 'Turno creado por el cliente.')
       `;
-      db.query(sqlHistorial, [result2.insertId]);
+      db.query(sqlHistorial, [result2.insertId], (err3) => {
+        if (err3) console.error('⚠️ Error historial (no crítico):', err3.message);
+      });
 
       res.json({ success: true, codigoTurno, numeroTurno, personasDelante, tiempoEstimadoMin: tiempoEstimado, idTurno: result2.insertId });
     });

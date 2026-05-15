@@ -51,10 +51,9 @@ let yaNotificado      = false;
 
 // ── Init ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-    placeName         = sessionStorage.getItem('smartqueue_place') || '';
-    categoria         = sessionStorage.getItem('smartqueue_categoria') || '';
-    idEstablecimiento = sessionStorage.getItem('idEstablecimiento') || null;
-    idTurnoActual     = sessionStorage.getItem('idTurno') || null;
+    placeName     = sessionStorage.getItem('smartqueue_place') || '';
+    categoria     = sessionStorage.getItem('smartqueue_categoria') || '';
+    idTurnoActual = sessionStorage.getItem('idTurno') || null;
 
     // Pedir permiso de notificaciones
     if (Notification.permission === 'default') {
@@ -64,22 +63,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     const serviceEl = document.getElementById('service-name');
     if (serviceEl) serviceEl.textContent = placeName || 'Sin servicio';
 
-    // Si no tenemos idEstablecimiento, buscarlo por nombre
-    if (!idEstablecimiento && placeName) {
+    // ✅ FIX PRINCIPAL: SIEMPRE resolver idEstablecimiento por nombre desde el backend
+    // Nunca confiar en el valor cacheado (puede pertenecer a otro lugar)
+    if (placeName) {
         try {
             const res  = await fetch(`http://localhost:3001/establecimiento/buscar?nombre=${encodeURIComponent(placeName)}`);
             const data = await res.json();
             if (data && data.IDEstablecimiento) {
                 idEstablecimiento = data.IDEstablecimiento;
                 sessionStorage.setItem('idEstablecimiento', idEstablecimiento);
+                console.log('✅ idEstablecimiento para', placeName, ':', idEstablecimiento);
+            } else {
+                console.error('❌ No se encontró establecimiento para:', placeName);
             }
         } catch (e) {
             console.warn('No se pudo obtener establecimiento:', e);
         }
     }
 
+    if (!idEstablecimiento) {
+        console.error('❌ Sin idEstablecimiento, no se puede continuar');
+        setVal('status-text', 'Error: lugar no encontrado');
+        return;
+    }
+
     // Si el cliente no tiene turno aún, tomarlo automáticamente
-    if (!idTurnoActual && idEstablecimiento) {
+    if (!idTurnoActual) {
         await tomarTurno();
     } else {
         await actualizarTurno();
@@ -88,17 +97,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     iniciarAutoRefresh();
     renderExtra();
 
-    // ── FIX SCROLL: asegura que el body y la card sean scrolleables ──
-    document.body.style.overflowY    = 'auto';
-    document.body.style.height       = '100%';
+    // ── Scroll ──
+    document.body.style.overflowY = 'auto';
+    document.body.style.height    = '100%';
     const card = document.querySelector('.turno-card');
     if (card) {
-        card.style.overflowY  = 'auto';
-        card.style.maxHeight  = '100vh';
-        card.style.scrollbarWidth = 'thin'; // Firefox
+        card.style.overflowY      = 'auto';
+        card.style.maxHeight      = '100vh';
+        card.style.scrollbarWidth = 'thin';
         card.style.scrollbarColor = '#a8b56a transparent';
     }
-    // Webkit scrollbar (Chrome/Safari) — inyecta estilo dinámico
     const style = document.createElement('style');
     style.textContent = `
         .turno-card::-webkit-scrollbar { width: 4px; }
@@ -115,39 +123,58 @@ async function tomarTurno() {
     const usuario   = JSON.parse(sessionStorage.getItem('usuario') || '{}');
     const idUsuario = usuario.IDUsuario;
 
+    console.log('🟡 tomarTurno() → idUsuario:', idUsuario, '| idEstablecimiento:', idEstablecimiento);
+
     if (!idUsuario || !idEstablecimiento) {
-        console.warn('Faltan datos para tomar turno');
+        console.warn('❌ Faltan datos para tomar turno');
         return;
     }
 
     try {
         const resServ   = await fetch(`http://localhost:3001/servicios/${idEstablecimiento}`);
         const servicios = await resServ.json();
+        console.log('📋 Servicios de', placeName, ':', servicios);
+
         if (!servicios || servicios.length === 0) {
-            console.warn('No hay servicios disponibles');
+            console.warn('❌ No hay servicios para este establecimiento');
+            setVal('status-text', 'Sin servicios disponibles');
             return;
         }
+
         const idServicio = servicios[0].IDServicio;
+        console.log('✅ Usando idServicio:', idServicio);
+
+        const payload = {
+            idUsuario,
+            idServicio,
+            idEstablecimiento: Number(idEstablecimiento)
+        };
+        console.log('📤 Enviando a /turno/nuevo:', payload);
 
         const res  = await fetch('http://localhost:3001/turno/nuevo', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ idUsuario, idServicio, idEstablecimiento })
+            body:    JSON.stringify(payload)
         });
+
         const data = await res.json();
+        console.log('📥 Respuesta /turno/nuevo:', data);
+
+        if (!res.ok) {
+            console.error('❌ Error del servidor al crear turno:', data.error);
+            setVal('status-text', 'Error al tomar turno');
+            return;
+        }
 
         if (data.success) {
             idTurnoActual = data.idTurno;
             sessionStorage.setItem('idTurno', idTurnoActual);
 
-            // Mostrar datos iniciales del turno recién creado
             setVal('mi-turno',         data.codigoTurno);
             setVal('personas-delante', data.personasDelante);
             setVal('tiempo-estimado',  data.tiempoEstimadoMin > 0 ? `${data.tiempoEstimadoMin} min` : '< 5 min');
             setVal('status-text',      'En espera');
-
-            // Turno actual: si soy el primero, mi turno ES el actual
-            setVal('turno-actual', data.personasDelante === 0 ? data.codigoTurno : '–');
+            setVal('turno-actual',     data.personasDelante === 0 ? data.codigoTurno : '–');
 
             const pct = data.personasDelante === 0 ? 100 : Math.max(0, 100 - (data.personasDelante * 10));
             document.getElementById('pct').textContent           = `${pct}%`;
@@ -157,7 +184,7 @@ async function tomarTurno() {
             if (dot) dot.className = 'status-dot';
         }
     } catch (e) {
-        console.warn('Error al tomar turno:', e);
+        console.error('❌ Error al tomar turno:', e);
     }
 }
 
@@ -166,38 +193,42 @@ async function actualizarTurno() {
     if (!idTurnoActual || !idEstablecimiento) return;
 
     try {
-        
         const [resTurno, reCola] = await Promise.all([
             fetch(`http://localhost:3001/turno/${idTurnoActual}/estado`),
             fetch(`http://localhost:3001/cola/${idEstablecimiento}`)
         ]);
+
+        // Si el turno ya no existe en BD, limpiar y tomar uno nuevo
+        if (resTurno.status === 404) {
+            console.warn('⚠️ Turno no encontrado en BD, limpiando sesión');
+            sessionStorage.removeItem('idTurno');
+            idTurnoActual = null;
+            await tomarTurno();
+            return;
+        }
 
         if (!resTurno.ok) throw new Error('Sin respuesta del turno');
 
         const data = await resTurno.json();
         const cola = reCola.ok ? await reCola.json() : [];
 
-        
-        const miPosEnCola   = cola.findIndex(t => String(t.IDTurno) === String(idTurnoActual));
-        // Si mi turno ya no aparece en la cola (atendido/cancelado), miPosEnCola = -1
+        // Calcular posición REAL en la cola
+        const miPosEnCola     = cola.findIndex(t => String(t.IDTurno) === String(idTurnoActual));
         const personasDelante = miPosEnCola > 0 ? miPosEnCola : (miPosEnCola === 0 ? 0 : data.PersonasDelante ?? 0);
         const tiempoReal      = personasDelante * 5;
 
-        
+        // Turno actual = el primero de la cola
         const turnoActualCodigo = cola.length > 0 ? cola[0].CodigoTurno : (data.CodigoTurno ?? '–');
 
-        
         setVal('mi-turno',         data.CodigoTurno ?? '–');
         setVal('turno-actual',     turnoActualCodigo);
         setVal('personas-delante', personasDelante);
         setVal('tiempo-estimado',  tiempoReal > 0 ? `${tiempoReal} min` : '< 5 min');
 
-        
         const pct = personasDelante === 0 ? 100 : Math.max(5, 100 - (personasDelante * 10));
         document.getElementById('pct').textContent           = `${pct}%`;
         document.getElementById('progress-fill').style.width = `${pct}%`;
 
-        
         const estado = data.NombreEstado || 'En espera';
         setVal('status-text', estado);
 
@@ -207,7 +238,7 @@ async function actualizarTurno() {
                 (estado === 'En atención' ? 'green' : estado === 'Cancelado' ? 'red' : '');
         }
 
-        
+        // 🔔 Notificación cuando el admin llama al cliente
         if (estado === 'En atención' && !yaNotificado) {
             yaNotificado = true;
 
@@ -228,7 +259,7 @@ async function actualizarTurno() {
             showToast('🔔 ¡Es tu turno! Acércate al mostrador');
         }
 
-        
+        // Banner "casi tu turno"
         if (estado !== 'En atención') {
             const banner = document.getElementById('notify-banner');
             if (banner) {
@@ -256,7 +287,7 @@ async function actualizarTurno() {
     }
 }
 
-
+// ── Cancelar turno ────────────────────────────────────────────
 async function cancelarTurno() {
     if (!confirm('¿Seguro que deseas cancelar tu turno?')) return;
     if (!idTurnoActual) { showToast('No tienes un turno activo'); return; }
@@ -277,7 +308,7 @@ async function cancelarTurno() {
     }
 }
 
-
+// ── Auto-refresh cada 5 segundos ──────────────────────────────
 function iniciarAutoRefresh() {
     clearInterval(autoRefreshTimer);
     clearInterval(countdownTimer);
@@ -302,7 +333,7 @@ function resetCountdown() {
     if (el) el.textContent = 5;
 }
 
-
+// ── Sección extra por categoría ───────────────────────────────
 function renderExtra() {
     const esRestaurante = Object.keys(INFO_RESTAURANTES).includes(placeName);
     const esClinica     = Object.keys(HORARIOS_CLINICA).includes(placeName);
@@ -374,7 +405,7 @@ function irARestaurante(nombre) {
     window.location.reload();
 }
 
-
+// ── Helpers ───────────────────────────────────────────────────
 function setVal(id, val) {
     const el = document.getElementById(id);
     if (el) el.textContent = val;
