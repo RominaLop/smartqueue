@@ -109,3 +109,41 @@ select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(170, 189, 90, 0.2);
 }
+/* ── Agrega esto al final de tu login.css ── */
+
+.admin-fields {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+}
+
+.admin-fields.visible {
+  display: flex;
+}
+
+.toggle-admin {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-admin span {
+  text-decoration: underline;
+  color: #aabd5a;
+}
+
+.error-msg {
+  display: none;
+}
+
+.api-error {
+  text-align: center;
+}
+
+#spinner {
+  display: none;
+}

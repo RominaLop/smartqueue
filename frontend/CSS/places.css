@@ -10,7 +10,7 @@
   gap: 20px;
 }
 
-/* ── Top bar ─────────────────────────────────────────────── */
+
 .top-bar {
   display: flex;
   align-items: center;
@@ -55,7 +55,7 @@
 }
 .logout-btn:hover { color: var(--error); }
 
-/* ── Categorías ──────────────────────────────────────────── */
+
 .categories {
   display: flex;
   gap: 8px;
@@ -84,7 +84,7 @@
   color: white;
 }
 
-/* ── Buscador ────────────────────────────────────────────── */
+
 .search-bar {
   position: relative;
 }
@@ -101,7 +101,7 @@
   pointer-events: none;
 }
 
-/* ── Grid de lugares ─────────────────────────────────────── */
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -114,7 +114,7 @@
 }
 .place-card:hover { transform: translateY(-5px); }
 
-/* Contenedor de imagen — mantiene proporción cuadrada */
+
 .place-img {
   width: 100%;
   aspect-ratio: 1;
@@ -125,7 +125,6 @@
   position: relative;
 }
 
-/* La imagen ocupa todo el contenedor */
 .place-img img {
   width: 100%;
   height: 100%;
@@ -134,7 +133,7 @@
   border-radius: 16px;
 }
 
-/* Si la imagen falla, se oculta y queda el gradiente de fondo */
+
 .place-img img.hidden {
   display: none;
 }
@@ -153,7 +152,7 @@
   margin-top: 2px;
 }
 
-/* ── Estado vacío ────────────────────────────────────────── */
+
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;
@@ -162,7 +161,7 @@
   font-size: 14px;
 }
 
-/* ── Skeletons ───────────────────────────────────────────── */
+
 .skeleton { animation: pulse 1.4s ease infinite; }
 
 .sk-img {
@@ -180,7 +179,7 @@
 }
 .sk-line.short { width: 60%; }
 
-/* Ajustes para versión React */
+
 
 .places-card {
   width: min(1180px, calc(100vw - 48px)) !important;
